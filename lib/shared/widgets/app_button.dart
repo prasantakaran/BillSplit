@@ -1,43 +1,71 @@
 import 'package:flutter/material.dart';
 
-/// Full-width primary action button used across the app.
-///
-/// Shows a progress indicator and ignores taps while [isLoading] is true.
+import '../../core/theme/app_colors.dart';
+
 class AppButton extends StatelessWidget {
   const AppButton({
     super.key,
     required this.label,
     required this.onPressed,
     this.icon,
+    this.trailingIcon,
     this.isLoading = false,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
+  final IconData? trailingIcon;
   final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 52,
+      height: 56,
       child: FilledButton(
         onPressed: isLoading ? null : onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.brandBlue,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
         child: isLoading
             ? const SizedBox(
                 width: 22,
                 height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2.5),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Colors.white,
+                ),
               )
-            : Row(
-                mainAxisSize: MainAxisSize.min,
+            : Stack(
+                alignment: Alignment.center,
                 children: [
-                  if (icon != null) ...[
-                    Icon(icon),
-                    const SizedBox(width: 8),
-                  ],
-                  Text(label),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (icon != null) ...[
+                        Icon(icon),
+                        const SizedBox(width: 8),
+                      ],
+                      Text(
+                        label,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (trailingIcon != null)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Icon(trailingIcon, size: 24),
+                    ),
                 ],
               ),
       ),

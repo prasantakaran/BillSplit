@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/constants/app_const.dart';
 import '../../../../core/constants/app_images.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/app_logo.dart';
+import '../../../../shared/widgets/app_logo.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
 
 /// Branded splash screen shown on app launch.

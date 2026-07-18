@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../constants/app_images.dart';
+import '../../core/constants/app_images.dart';
 
 /// Displays a BillSplit logo asset at a fixed square [size].
 class AppLogo extends StatelessWidget {

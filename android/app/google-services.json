@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "788744109552",
+    "project_id": "billsplit-efe83",
+    "storage_bucket": "billsplit-efe83.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:788744109552:android:06c1afa8aa92a39cfab135",
+        "android_client_info": {
+          "package_name": "com.billsplit.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC11tq468WQ6QDQUR9vWV7pPWJstPZMtfw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

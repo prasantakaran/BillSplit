@@ -35,6 +35,7 @@ void main() {
       expect(find.widgetWithText(TextFormField, 'Email'), findsOneWidget);
       expect(find.widgetWithText(TextFormField, 'Password'), findsOneWidget);
       expect(find.text('Sign In'), findsOneWidget);
+      expect(find.text('Forgot Password?'), findsOneWidget);
       expect(find.text('Continue with Google'), findsOneWidget);
     });
 
@@ -69,11 +70,13 @@ void main() {
         (WidgetTester tester) async {
       await tester.pumpWidget(_wrap(const LoginScreen()));
 
-      await tester.tap(find.text("Don't have an account? Sign up"));
+      await tester.ensureVisible(find.text('Sign up'));
+      await tester.tap(find.text('Sign up'));
       await tester.pump();
 
       expect(find.text('Create Account'), findsOneWidget);
-      expect(find.text('Already have an account? Sign in'), findsOneWidget);
+      expect(find.text('Already have an account? '), findsOneWidget);
+      expect(find.text('Sign in'), findsOneWidget);
     });
   });
 }
