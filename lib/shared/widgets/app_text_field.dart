@@ -15,6 +15,7 @@ class AppTextField extends StatelessWidget {
     this.autofillHints,
     this.validator,
     this.onFieldSubmitted,
+    this.onChanged,
   });
 
   final String hint;
@@ -27,6 +28,7 @@ class AppTextField extends StatelessWidget {
   final Iterable<String>? autofillHints;
   final String? Function(String?)? validator;
   final ValueChanged<String>? onFieldSubmitted;
+  final ValueChanged<String>? onChanged;
 
   OutlineInputBorder _border(Color color, [double width = 1]) {
     return OutlineInputBorder(
@@ -45,6 +47,7 @@ class AppTextField extends StatelessWidget {
       autofillHints: autofillHints,
       validator: validator,
       onFieldSubmitted: onFieldSubmitted,
+      onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(

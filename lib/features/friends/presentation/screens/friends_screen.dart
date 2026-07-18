@@ -7,6 +7,7 @@ import '../../../../core/models/friend.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/repositories/friends_repository.dart';
 import '../widgets/add_friend_dialog.dart';
+import '../widgets/friend_card.dart';
 
 /// Lists the user's friends live from Firestore.
 ///
@@ -127,68 +128,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
             separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               final Friend friend = friends[index];
-              return _FriendCard(
+              return FriendCard(
                 friend: friend,
                 onDelete: () => _confirmDelete(friend),
               );
             },
           );
         },
-      ),
-    );
-  }
-}
-
-class _FriendCard extends StatelessWidget {
-  const _FriendCard({required this.friend, required this.onDelete});
-
-  final Friend friend;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    final String initial =
-        friend.name.isEmpty ? '?' : friend.name[0].toUpperCase();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.lightBorder),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: CircleAvatar(
-          backgroundColor: AppColors.brandBlue.withValues(alpha: 0.12),
-          child: Text(
-            initial,
-            style: const TextStyle(
-              color: AppColors.brandBlue,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        title: Text(
-          friend.name,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            color: AppColors.lightTextPrimary,
-          ),
-        ),
-        subtitle: friend.upiId == null && friend.phone == null
-            ? null
-            : Text(
-                friend.upiId ?? friend.phone!,
-                style: const TextStyle(color: AppColors.lightTextSecondary),
-              ),
-        trailing: IconButton(
-          tooltip: 'Remove friend',
-          icon: const Icon(
-            Icons.delete_outline,
-            color: AppColors.lightTextSecondary,
-          ),
-          onPressed: onDelete,
-        ),
       ),
     );
   }
