@@ -11,6 +11,7 @@ import '../../../friends/data/repositories/friends_repository.dart';
 import '../../../friends/presentation/screens/friends_screen.dart';
 import '../../../friends/presentation/widgets/add_friend_dialog.dart';
 import '../../../friends/presentation/widgets/friend_card.dart';
+import '../../../history/presentation/screens/history_screen.dart';
 import '../../../scan/presentation/screens/scan_screen.dart';
 
 /// Dashboard shown after sign-in: greeting, searchable live friends list.
@@ -88,6 +89,15 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('BillSplit'),
         actions: [
+          IconButton(
+            tooltip: 'Bill history',
+            icon: const Icon(Icons.history),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const HistoryScreen(),
+              ),
+            ),
+          ),
           IconButton(
             tooltip: 'Sign out',
             icon: const Icon(Icons.logout),

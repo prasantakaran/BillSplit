@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -133,24 +135,35 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
     _isSaving.value = true;
     try {
-      await _repository.saveBill(bill);
-      if (!mounted) {
-        return;
-      }
-      flow.reset();
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('Bill saved to your history.')),
-        );
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      // Firestore's set() future only completes once the SERVER acknowledges
+      // the write. Offline, the write is queued locally and synced later —
+      // so a timeout means "queued", not "failed".
+      await _repository.saveBill(bill).timeout(const Duration(seconds: 10));
+      _finishSave('Bill saved to your history.');
+    } on TimeoutException {
+      _finishSave(
+        'No connection — bill saved on this device and will sync when online.',
+      );
     } on FirebaseException catch (e) {
       _showMessage('Could not save the bill: ${e.message ?? e.code}');
+    } catch (e) {
+      _showMessage('Could not save the bill: $e');
     } finally {
       if (mounted) {
         _isSaving.value = false;
       }
     }
+  }
+
+  void _finishSave(String message) {
+    if (!mounted) {
+      return;
+    }
+    context.read<BillFlowState>().reset();
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   void _showMessage(String message) {

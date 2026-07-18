@@ -12,7 +12,23 @@ class BillsRepository {
 
   final CollectionReference<Map<String, dynamic>> _collection;
 
+  /// Live list of saved bills, newest first.
+  Stream<List<Bill>> watchBills() {
+    return _collection
+        .orderBy('createdAtMillis', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Bill.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
+  }
+
   Future<void> saveBill(Bill bill) {
     return _collection.doc(bill.id).set(bill.toMap());
+  }
+
+  Future<void> deleteBill(String id) {
+    return _collection.doc(id).delete();
   }
 }
