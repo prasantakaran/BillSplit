@@ -1,18 +1,51 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 
 import 'package:bill_split/app/app.dart';
 import 'package:bill_split/core/constants/app_const.dart';
+import 'package:bill_split/features/auth/data/services/auth_service.dart';
+import 'package:bill_split/features/auth/presentation/providers/auth_provider.dart';
 import 'package:bill_split/features/auth/presentation/screens/login_screen.dart';
 import 'package:bill_split/features/splash/presentation/screens/splash_screen.dart';
 
-Widget _wrap(Widget child) => MaterialApp(home: child);
+/// Auth service stand-in so widget tests never touch Firebase.
+class FakeAuthService implements AuthService {
+  @override
+  User? get currentUser => null;
+
+  @override
+  Stream<User?> authStateChanges() => Stream<User?>.value(null);
+
+  @override
+  Future<void> signInWithEmail(String email, String password) async {}
+
+  @override
+  Future<void> registerWithEmail(String email, String password) async {}
+
+  @override
+  Future<void> sendPasswordResetEmail(String email) async {}
+
+  @override
+  Future<bool> signInWithGoogle() async => false;
+
+  @override
+  Future<void> signOut() async {}
+}
+
+Widget _wrapLogin() {
+  return MultiProvider(
+    providers: buildAuthProviders(FakeAuthService()),
+    child: const MaterialApp(home: LoginScreen()),
+  );
+}
 
 void main() {
   group('SplashScreen', () {
     testWidgets('shows branding then navigates to the login screen',
         (WidgetTester tester) async {
-      await tester.pumpWidget(const BillSplitApp());
+      await tester.pumpWidget(BillSplitApp(authService: FakeAuthService()));
 
       expect(find.byType(SplashScreen), findsOneWidget);
       expect(find.text(AppConstants.tagline), findsOneWidget);
@@ -29,7 +62,7 @@ void main() {
   group('LoginScreen', () {
     testWidgets('renders branding, email form and sign-in options',
         (WidgetTester tester) async {
-      await tester.pumpWidget(_wrap(const LoginScreen()));
+      await tester.pumpWidget(_wrapLogin());
 
       expect(find.text('BillSplit'), findsOneWidget);
       expect(find.widgetWithText(TextFormField, 'Email'), findsOneWidget);
@@ -41,18 +74,18 @@ void main() {
 
     testWidgets('shows validation errors when submitting an empty form',
         (WidgetTester tester) async {
-      await tester.pumpWidget(_wrap(const LoginScreen()));
+      await tester.pumpWidget(_wrapLogin());
 
       await tester.tap(find.text('Sign In'));
       await tester.pump();
 
-      expect(find.text('Enter your email'), findsOneWidget);
-      expect(find.text('Enter your password'), findsOneWidget);
+      expect(find.text('Email is required'), findsOneWidget);
+      expect(find.text('Password is required'), findsOneWidget);
     });
 
     testWidgets('rejects malformed email and short password',
         (WidgetTester tester) async {
-      await tester.pumpWidget(_wrap(const LoginScreen()));
+      await tester.pumpWidget(_wrapLogin());
 
       await tester.enterText(
           find.widgetWithText(TextFormField, 'Email'), 'not-an-email');
@@ -63,20 +96,48 @@ void main() {
 
       expect(find.text('Enter a valid email address'), findsOneWidget);
       expect(
-          find.text('Password must be at least 6 characters'), findsOneWidget);
+          find.text('Password must be at least 8 characters'), findsOneWidget);
     });
 
-    testWidgets('toggles between sign-in and registration modes',
+    testWidgets(
+        'registration mode shows confirm password field and mode toggle',
         (WidgetTester tester) async {
-      await tester.pumpWidget(_wrap(const LoginScreen()));
+      await tester.pumpWidget(_wrapLogin());
+
+      expect(
+          find.widgetWithText(TextFormField, 'Confirm Password'), findsNothing);
 
       await tester.ensureVisible(find.text('Sign up'));
       await tester.tap(find.text('Sign up'));
       await tester.pump();
 
       expect(find.text('Create Account'), findsOneWidget);
+      expect(find.widgetWithText(TextFormField, 'Confirm Password'),
+          findsOneWidget);
       expect(find.text('Already have an account? '), findsOneWidget);
       expect(find.text('Sign in'), findsOneWidget);
+    });
+
+    testWidgets('rejects mismatched passwords during registration',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_wrapLogin());
+
+      await tester.ensureVisible(find.text('Sign up'));
+      await tester.tap(find.text('Sign up'));
+      await tester.pump();
+
+      await tester.enterText(
+          find.widgetWithText(TextFormField, 'Email'), 'test@example.com');
+      await tester.enterText(
+          find.widgetWithText(TextFormField, 'Password'), 'secret123');
+      await tester.enterText(
+          find.widgetWithText(TextFormField, 'Confirm Password'), 'secret124');
+
+      await tester.ensureVisible(find.text('Create Account'));
+      await tester.tap(find.text('Create Account'));
+      await tester.pump();
+
+      expect(find.text('Passwords do not match'), findsOneWidget);
     });
   });
 }

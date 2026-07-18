@@ -1,18 +1,22 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/constants/app_images.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/validation.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_logo.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../data/services/auth_service.dart';
 
 /// Sign-in screen shown to unauthenticated users.
 ///
-/// Supports email/password sign-in or registration, plus Google Sign-In.
-/// UI only for now — both flows are wired to Firebase Authentication in a
-/// later step.
+/// Supports email/password sign-in or registration (with password
+/// confirmation), password reset, and Google Sign-In — all backed by
+/// [AuthService]. On success the auth `StreamProvider` makes [AuthGate] swap
+/// to the home screen, so no manual navigation happens here.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -24,68 +28,93 @@ class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   bool _isRegistering = false;
-
-  static final RegExp _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  String? _validateEmail(String? value) {
-    final String email = value?.trim() ?? '';
-    if (email.isEmpty) {
-      return 'Enter your email';
-    }
-    if (!_emailPattern.hasMatch(email)) {
-      return 'Enter a valid email address';
-    }
-    return null;
-  }
-
-  String? _validatePassword(String? value) {
-    final String password = value ?? '';
-    if (password.isEmpty) {
-      return 'Enter your password';
-    }
-    if (password.length < 6) {
-      return 'Password must be at least 6 characters';
-    }
-    return null;
-  }
-
-  void _submitEmailForm() {
+  Future<void> _submitEmailForm() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    // TODO(auth): sign in / register with email and password via AuthService.
-    _showComingSoon();
+
+    final AuthService authService = context.read<AuthService>();
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text;
+
+    setState(() => _isSubmitting = true);
+    try {
+      if (_isRegistering) {
+        await authService.registerWithEmail(email, password);
+      } else {
+        await authService.signInWithEmail(email, password);
+      }
+      // Success: AuthGate reacts to the auth state stream and shows home.
+    } on AuthException catch (e) {
+      _showMessage(e.message);
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
-  void _onForgotPasswordPressed() {
-    // TODO(auth): send a password reset email via AuthService.
-    _showComingSoon();
+  Future<void> _onForgotPasswordPressed() async {
+    final String email = _emailController.text.trim();
+    final String? emailError = Validators.email(email);
+    if (emailError != null) {
+      _showMessage('$emailError to reset your password.');
+      return;
+    }
+
+    final AuthService authService = context.read<AuthService>();
+    setState(() => _isSubmitting = true);
+    try {
+      await authService.sendPasswordResetEmail(email);
+      _showMessage('Password reset email sent to $email.');
+    } on AuthException catch (e) {
+      _showMessage(e.message);
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
-  void _onGoogleSignInPressed() {
-    // TODO(auth): trigger Google Sign-In via AuthService once Firebase is set up.
-    _showComingSoon();
+  Future<void> _onGoogleSignInPressed() async {
+    final AuthService authService = context.read<AuthService>();
+    setState(() => _isSubmitting = true);
+    try {
+      // Returns false when the user dismisses the account picker — no error.
+      await authService.signInWithGoogle();
+    } on AuthException catch (e) {
+      _showMessage(e.message);
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
-  void _showComingSoon() {
+  void _showMessage(String message) {
+    if (!mounted) {
+      return;
+    }
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(
-          content: Text('Authentication is coming in a later step.'),
-        ),
-      );
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -165,7 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.email],
-                    validator: _validateEmail,
+                    validator: Validators.email,
                   ),
                   const SizedBox(height: 16),
                   AppTextField(
@@ -173,9 +202,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     hint: 'Password',
                     prefixIcon: Icons.lock_outline,
                     obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.done,
+                    textInputAction: _isRegistering
+                        ? TextInputAction.next
+                        : TextInputAction.done,
                     autofillHints: const [AutofillHints.password],
-                    onFieldSubmitted: (_) => _submitEmailForm(),
+                    onFieldSubmitted: _isRegistering
+                        ? null
+                        : (_) => _submitEmailForm(),
                     suffixIcon: IconButton(
                       tooltip: _obscurePassword
                           ? 'Show password'
@@ -190,14 +223,47 @@ class _LoginScreenState extends State<LoginScreen> {
                         setState(() => _obscurePassword = !_obscurePassword);
                       },
                     ),
-                    validator: _validatePassword,
+                    validator: Validators.password,
                   ),
+                  if (_isRegistering) ...[
+                    const SizedBox(height: 16),
+                    AppTextField(
+                      controller: _confirmPasswordController,
+                      hint: 'Confirm Password',
+                      prefixIcon: Icons.lock_outline,
+                      obscureText: _obscureConfirmPassword,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _submitEmailForm(),
+                      suffixIcon: IconButton(
+                        tooltip: _obscureConfirmPassword
+                            ? 'Show password'
+                            : 'Hide password',
+                        icon: Icon(
+                          _obscureConfirmPassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: AppColors.lightTextSecondary,
+                        ),
+                        onPressed: () {
+                          setState(
+                            () => _obscureConfirmPassword =
+                                !_obscureConfirmPassword,
+                          );
+                        },
+                      ),
+                      validator: (value) => Validators.confirmPassword(
+                        value,
+                        _passwordController.text,
+                      ),
+                    ),
+                  ],
                   if (!_isRegistering) ...[
                     const SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: _onForgotPasswordPressed,
+                        onPressed:
+                            _isSubmitting ? null : _onForgotPasswordPressed,
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -220,6 +286,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   AppButton(
                     label: _isRegistering ? 'Create Account' : 'Sign In',
                     trailingIcon: Icons.arrow_forward,
+                    isLoading: _isSubmitting,
                     onPressed: _submitEmailForm,
                   ),
                   const SizedBox(height: 20),
@@ -280,7 +347,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: double.infinity,
                     height: 56,
                     child: OutlinedButton(
-                      onPressed: _onGoogleSignInPressed,
+                      onPressed:
+                          _isSubmitting ? null : _onGoogleSignInPressed,
                       style: OutlinedButton.styleFrom(
                         backgroundColor: AppColors.lightSurface,
                         side: BorderSide(

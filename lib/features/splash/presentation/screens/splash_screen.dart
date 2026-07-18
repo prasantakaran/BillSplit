@@ -7,15 +7,14 @@ import '../../../../core/constants/app_const.dart';
 import '../../../../core/constants/app_images.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_logo.dart';
-import '../../../auth/presentation/screens/login_screen.dart';
+import '../../../auth/presentation/screens/auth_gate.dart';
 
 /// Branded splash screen shown on app launch.
 ///
 /// Plays a short intro animation (logo fades and scales in, tagline slides up
-/// after it), then fades into the login screen once
-/// [AppConstants.splashMinDuration] has elapsed. Once Firebase Authentication
-/// is added this will hand off to the auth gate instead, so signed-in users
-/// skip the login screen.
+/// after it), then fades into the [AuthGate] once
+/// [AppConstants.splashMinDuration] has elapsed — signed-in users land on
+/// home, everyone else on the login screen.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -81,11 +80,10 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) {
       return;
     }
-    // TODO(auth): navigate to AuthGate once Firebase Authentication is added.
     Navigator.of(context).pushReplacement(
       PageRouteBuilder<void>(
         transitionDuration: const Duration(milliseconds: 400),
-        pageBuilder: (_, _, _) => const LoginScreen(),
+        pageBuilder: (_, _, _) => const AuthGate(),
         transitionsBuilder: (_, animation, _, child) =>
             FadeTransition(opacity: animation, child: child),
       ),

@@ -12,7 +12,20 @@
           "package_name": "com.billsplit.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "788744109552-sngial9al4r16ps6so5ptvkv2odq2oil.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.billsplit.app",
+            "certificate_hash": "b1ab867d5d38405a8f94756117865785171409eb"
+          }
+        },
+        {
+          "client_id": "788744109552-5jql8kqq0j521r7cj5vhc9attdkq9tai.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyC11tq468WQ6QDQUR9vWV7pPWJstPZMtfw"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "788744109552-5jql8kqq0j521r7cj5vhc9attdkq9tai.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
