@@ -15,8 +15,9 @@ class BillItem {
       id: map['id'] as String? ?? '',
       name: map['name'] as String? ?? '',
       price: (map['price'] as num? ?? 0).toDouble(),
-      sharedByFriendIds:
-          List<String>.from(map['sharedByFriendIds'] as List? ?? const []),
+      sharedByFriendIds: List<String>.from(
+        map['sharedByFriendIds'] as List? ?? const [],
+      ),
     );
   }
 

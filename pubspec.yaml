@@ -40,6 +40,11 @@ dependencies:
   provider: ^6.1.5+1
   cloud_firestore: ^6.7.1
   uuid: ^4.6.0
+  image_picker: ^1.2.3
+  google_mlkit_text_recognition: ^0.16.0
+  intl: ^0.20.3
+  url_launcher: ^6.3.2
+  share_plus: ^13.2.1
 
 dev_dependencies:
   flutter_test:

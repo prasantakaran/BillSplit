@@ -3,12 +3,7 @@
 /// Pure Dart — Firestore document id is kept outside [toMap] and supplied
 /// back through [Friend.fromMap].
 class Friend {
-  const Friend({
-    required this.id,
-    required this.name,
-    this.upiId,
-    this.phone,
-  });
+  const Friend({required this.id, required this.name, this.upiId, this.phone});
 
   factory Friend.fromMap(String id, Map<String, dynamic> map) {
     return Friend(
@@ -30,14 +25,5 @@ class Friend {
       if (upiId != null) 'upiId': upiId,
       if (phone != null) 'phone': phone,
     };
-  }
-
-  Friend copyWith({String? id, String? name, String? upiId, String? phone}) {
-    return Friend(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      upiId: upiId ?? this.upiId,
-      phone: phone ?? this.phone,
-    );
   }
 }

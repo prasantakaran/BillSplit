@@ -43,8 +43,7 @@ class Bill {
   final List<Settlement> settlements;
 
   /// Sum of all item prices, before tax.
-  double get itemsSubtotal =>
-      items.fold(0, (sum, item) => sum + item.price);
+  double get itemsSubtotal => items.fold(0, (sum, item) => sum + item.price);
 
   Map<String, dynamic> toMap() {
     return {
@@ -55,25 +54,5 @@ class Bill {
       'totalAmount': totalAmount,
       'settlements': settlements.map((s) => s.toMap()).toList(),
     };
-  }
-
-  Bill copyWith({
-    String? id,
-    String? restaurantName,
-    DateTime? createdAt,
-    List<BillItem>? items,
-    double? taxAmount,
-    double? totalAmount,
-    List<Settlement>? settlements,
-  }) {
-    return Bill(
-      id: id ?? this.id,
-      restaurantName: restaurantName ?? this.restaurantName,
-      createdAt: createdAt ?? this.createdAt,
-      items: items ?? this.items,
-      taxAmount: taxAmount ?? this.taxAmount,
-      totalAmount: totalAmount ?? this.totalAmount,
-      settlements: settlements ?? this.settlements,
-    );
   }
 }

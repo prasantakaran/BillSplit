@@ -32,18 +32,4 @@ class Settlement {
       'taxShare': taxShare,
     };
   }
-
-  Settlement copyWith({
-    String? friendId,
-    String? friendName,
-    double? itemsTotal,
-    double? taxShare,
-  }) {
-    return Settlement(
-      friendId: friendId ?? this.friendId,
-      friendName: friendName ?? this.friendName,
-      itemsTotal: itemsTotal ?? this.itemsTotal,
-      taxShare: taxShare ?? this.taxShare,
-    );
-  }
 }

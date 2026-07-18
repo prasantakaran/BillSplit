@@ -75,6 +75,4 @@ abstract final class Validators {
     if (number.isEmpty) return null;
     return mobile(number);
   }
-
-  static String? city(String? value) => required(value, field: 'City');
 }
