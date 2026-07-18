@@ -17,6 +17,10 @@ import '../../data/services/auth_service.dart';
 /// confirmation), password reset, and Google Sign-In — all backed by
 /// [AuthService]. On success the auth `StreamProvider` makes [AuthGate] swap
 /// to the home screen, so no manual navigation happens here.
+///
+/// Local UI state (obscure toggles, mode, submitting) lives in
+/// [ValueNotifier]s so only the widgets that depend on each piece of state
+/// rebuild — no `setState` over the whole form.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -31,16 +35,20 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
-  bool _isRegistering = false;
-  bool _isSubmitting = false;
+  final ValueNotifier<bool> _obscurePassword = ValueNotifier<bool>(true);
+  final ValueNotifier<bool> _obscureConfirmPassword = ValueNotifier<bool>(true);
+  final ValueNotifier<bool> _isRegistering = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _isSubmitting = ValueNotifier<bool>(false);
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _obscurePassword.dispose();
+    _obscureConfirmPassword.dispose();
+    _isRegistering.dispose();
+    _isSubmitting.dispose();
     super.dispose();
   }
 
@@ -54,9 +62,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final String email = _emailController.text.trim();
     final String password = _passwordController.text;
 
-    setState(() => _isSubmitting = true);
+    _isSubmitting.value = true;
     try {
-      if (_isRegistering) {
+      if (_isRegistering.value) {
         await authService.registerWithEmail(email, password);
       } else {
         await authService.signInWithEmail(email, password);
@@ -66,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _showMessage(e.message);
     } finally {
       if (mounted) {
-        setState(() => _isSubmitting = false);
+        _isSubmitting.value = false;
       }
     }
   }
@@ -80,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     final AuthService authService = context.read<AuthService>();
-    setState(() => _isSubmitting = true);
+    _isSubmitting.value = true;
     try {
       await authService.sendPasswordResetEmail(email);
       _showMessage('Password reset email sent to $email.');
@@ -88,14 +96,14 @@ class _LoginScreenState extends State<LoginScreen> {
       _showMessage(e.message);
     } finally {
       if (mounted) {
-        setState(() => _isSubmitting = false);
+        _isSubmitting.value = false;
       }
     }
   }
 
   Future<void> _onGoogleSignInPressed() async {
     final AuthService authService = context.read<AuthService>();
-    setState(() => _isSubmitting = true);
+    _isSubmitting.value = true;
     try {
       // Returns false when the user dismisses the account picker — no error.
       await authService.signInWithGoogle();
@@ -103,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _showMessage(e.message);
     } finally {
       if (mounted) {
-        setState(() => _isSubmitting = false);
+        _isSubmitting.value = false;
       }
     }
   }
@@ -115,6 +123,183 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Widget _buildObscureToggle(ValueNotifier<bool> obscure) {
+    return IconButton(
+      tooltip: obscure.value ? 'Show password' : 'Hide password',
+      icon: Icon(
+        obscure.value
+            ? Icons.visibility_outlined
+            : Icons.visibility_off_outlined,
+        color: AppColors.lightTextSecondary,
+      ),
+      onPressed: () => obscure.value = !obscure.value,
+    );
+  }
+
+  Widget _buildPasswordField() {
+    return ListenableBuilder(
+      listenable: Listenable.merge([_obscurePassword, _isRegistering]),
+      builder: (context, _) {
+        final bool isRegistering = _isRegistering.value;
+        return AppTextField(
+          controller: _passwordController,
+          hint: 'Password',
+          prefixIcon: Icons.lock_outline,
+          obscureText: _obscurePassword.value,
+          textInputAction:
+              isRegistering ? TextInputAction.next : TextInputAction.done,
+          autofillHints: const [AutofillHints.password],
+          onFieldSubmitted: isRegistering ? null : (_) => _submitEmailForm(),
+          suffixIcon: _buildObscureToggle(_obscurePassword),
+          validator: Validators.password,
+        );
+      },
+    );
+  }
+
+  /// Confirm-password field in registration mode; forgot-password link in
+  /// sign-in mode.
+  Widget _buildModeSection() {
+    return ListenableBuilder(
+      listenable: Listenable.merge(
+        [_isRegistering, _obscureConfirmPassword, _isSubmitting],
+      ),
+      builder: (context, _) {
+        if (_isRegistering.value) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 16),
+              AppTextField(
+                controller: _confirmPasswordController,
+                hint: 'Confirm Password',
+                prefixIcon: Icons.lock_outline,
+                obscureText: _obscureConfirmPassword.value,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _submitEmailForm(),
+                suffixIcon: _buildObscureToggle(_obscureConfirmPassword),
+                validator: (value) => Validators.confirmPassword(
+                  value,
+                  _passwordController.text,
+                ),
+              ),
+            ],
+          );
+        }
+        return Column(
+          children: [
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed:
+                    _isSubmitting.value ? null : _onForgotPasswordPressed,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  minimumSize: Size.zero,
+                ),
+                child: const Text(
+                  'Forgot Password?',
+                  style: TextStyle(
+                    color: AppColors.brandBlue,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return ListenableBuilder(
+      listenable: Listenable.merge([_isRegistering, _isSubmitting]),
+      builder: (context, _) => AppButton(
+        label: _isRegistering.value ? 'Create Account' : 'Sign In',
+        trailingIcon: Icons.arrow_forward,
+        isLoading: _isSubmitting.value,
+        onPressed: _submitEmailForm,
+      ),
+    );
+  }
+
+  Widget _buildModeToggle() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: _isRegistering,
+      builder: (context, isRegistering, _) => Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            isRegistering
+                ? 'Already have an account? '
+                : "Don't have an account? ",
+            style: const TextStyle(
+              fontSize: 15,
+              color: AppColors.lightTextSecondary,
+            ),
+          ),
+          GestureDetector(
+            onTap: () => _isRegistering.value = !_isRegistering.value,
+            child: Text(
+              isRegistering ? 'Sign in' : 'Sign up',
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppColors.brandBlue,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGoogleButton() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: _isSubmitting,
+      builder: (context, isSubmitting, _) => SizedBox(
+        width: double.infinity,
+        height: 56,
+        child: OutlinedButton(
+          onPressed: isSubmitting ? null : _onGoogleSignInPressed,
+          style: OutlinedButton.styleFrom(
+            backgroundColor: AppColors.lightSurface,
+            side: BorderSide(
+              color: AppColors.brandBlue.withValues(alpha: 0.55),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CustomPaint(
+                size: Size(22, 22),
+                painter: _GoogleGPainter(),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Continue with Google',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.brandNavy.withValues(alpha: 0.9),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -197,126 +382,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     validator: Validators.email,
                   ),
                   const SizedBox(height: 16),
-                  AppTextField(
-                    controller: _passwordController,
-                    hint: 'Password',
-                    prefixIcon: Icons.lock_outline,
-                    obscureText: _obscurePassword,
-                    textInputAction: _isRegistering
-                        ? TextInputAction.next
-                        : TextInputAction.done,
-                    autofillHints: const [AutofillHints.password],
-                    onFieldSubmitted: _isRegistering
-                        ? null
-                        : (_) => _submitEmailForm(),
-                    suffixIcon: IconButton(
-                      tooltip: _obscurePassword
-                          ? 'Show password'
-                          : 'Hide password',
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                        color: AppColors.lightTextSecondary,
-                      ),
-                      onPressed: () {
-                        setState(() => _obscurePassword = !_obscurePassword);
-                      },
-                    ),
-                    validator: Validators.password,
-                  ),
-                  if (_isRegistering) ...[
-                    const SizedBox(height: 16),
-                    AppTextField(
-                      controller: _confirmPasswordController,
-                      hint: 'Confirm Password',
-                      prefixIcon: Icons.lock_outline,
-                      obscureText: _obscureConfirmPassword,
-                      textInputAction: TextInputAction.done,
-                      onFieldSubmitted: (_) => _submitEmailForm(),
-                      suffixIcon: IconButton(
-                        tooltip: _obscureConfirmPassword
-                            ? 'Show password'
-                            : 'Hide password',
-                        icon: Icon(
-                          _obscureConfirmPassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          color: AppColors.lightTextSecondary,
-                        ),
-                        onPressed: () {
-                          setState(
-                            () => _obscureConfirmPassword =
-                                !_obscureConfirmPassword,
-                          );
-                        },
-                      ),
-                      validator: (value) => Validators.confirmPassword(
-                        value,
-                        _passwordController.text,
-                      ),
-                    ),
-                  ],
-                  if (!_isRegistering) ...[
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed:
-                            _isSubmitting ? null : _onForgotPasswordPressed,
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          minimumSize: Size.zero,
-                        ),
-                        child: const Text(
-                          'Forgot Password?',
-                          style: TextStyle(
-                            color: AppColors.brandBlue,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  _buildPasswordField(),
+                  _buildModeSection(),
                   const SizedBox(height: 16),
-                  AppButton(
-                    label: _isRegistering ? 'Create Account' : 'Sign In',
-                    trailingIcon: Icons.arrow_forward,
-                    isLoading: _isSubmitting,
-                    onPressed: _submitEmailForm,
-                  ),
+                  _buildSubmitButton(),
                   const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _isRegistering
-                            ? 'Already have an account? '
-                            : "Don't have an account? ",
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: AppColors.lightTextSecondary,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() => _isRegistering = !_isRegistering);
-                        },
-                        child: Text(
-                          _isRegistering ? 'Sign in' : 'Sign up',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.brandBlue,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildModeToggle(),
                   const SizedBox(height: 20),
                   Row(
                     children: [
@@ -343,41 +414,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: OutlinedButton(
-                      onPressed:
-                          _isSubmitting ? null : _onGoogleSignInPressed,
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: AppColors.lightSurface,
-                        side: BorderSide(
-                          color: AppColors.brandBlue.withValues(alpha: 0.55),
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const CustomPaint(
-                            size: Size(22, 22),
-                            painter: _GoogleGPainter(),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Continue with Google',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.brandNavy.withValues(alpha: 0.9),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  _buildGoogleButton(),
                 ],
               ),
             ),

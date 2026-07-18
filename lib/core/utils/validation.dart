@@ -9,6 +9,8 @@ abstract final class Validators {
   static final RegExp _hasLetter = RegExp(r'[A-Za-z]');
   static final RegExp _hasDigit = RegExp(r'\d');
 
+  static final RegExp _upiPattern = RegExp(r'^[\w.\-]{2,}@[a-zA-Z]{2,}$');
+
   static String? required(String? value, {String field = 'This field'}) {
     if (value == null || value.trim().isEmpty) return '$field is required';
     return null;
@@ -54,6 +56,24 @@ abstract final class Validators {
     if (value == null || value.isEmpty) return 'Please confirm your password';
     if (value != original) return 'Passwords do not match';
     return null;
+  }
+
+  /// Valid when empty — pass through [required] first if the field is
+  /// mandatory.
+  static String? upiId(String? value) {
+    final String upi = value?.trim() ?? '';
+    if (upi.isEmpty) return null;
+    if (!_upiPattern.hasMatch(upi)) {
+      return 'Enter a valid UPI ID (e.g. name@bank)';
+    }
+    return null;
+  }
+
+  /// Valid when empty — for optional mobile fields.
+  static String? optionalMobile(String? value) {
+    final String number = value?.trim() ?? '';
+    if (number.isEmpty) return null;
+    return mobile(number);
   }
 
   static String? city(String? value) => required(value, field: 'City');

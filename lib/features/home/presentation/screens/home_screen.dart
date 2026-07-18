@@ -6,6 +6,7 @@ import '../../../../core/constants/app_images.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_logo.dart';
 import '../../../auth/data/services/auth_service.dart';
+import '../../../friends/presentation/screens/friends_screen.dart';
 
 /// Temporary home screen proving the signed-in state.
 ///
@@ -53,6 +54,16 @@ class HomeScreen extends StatelessWidget {
                 fontWeight: FontWeight.w700,
                 color: AppColors.lightTextPrimary,
               ),
+            ),
+            const SizedBox(height: 32),
+            FilledButton.tonalIcon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const FriendsScreen(),
+                ),
+              ),
+              icon: const Icon(Icons.group_outlined),
+              label: const Text('Manage Friends'),
             ),
           ],
         ),
