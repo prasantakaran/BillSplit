@@ -1,6 +1,8 @@
+import 'package:equatable/equatable.dart';
+
 /// One person's share of a bill: their item costs plus a proportional part
 /// of the tax.
-class Settlement {
+class Settlement extends Equatable {
   const Settlement({
     required this.friendId,
     required this.friendName,
@@ -21,6 +23,9 @@ class Settlement {
   final String friendName;
   final double itemsTotal;
   final double taxShare;
+
+  @override
+  List<Object?> get props => [friendId, friendName, itemsTotal, taxShare];
 
   double get totalOwed => itemsTotal + taxShare;
 

@@ -1,8 +1,10 @@
+import 'package:equatable/equatable.dart';
+
 /// A single line item on a restaurant bill.
 ///
 /// [sharedByFriendIds] holds the ids of the friends who shared this item;
 /// the settlement calculator divides [price] equally between them.
-class BillItem {
+class BillItem extends Equatable {
   const BillItem({
     required this.id,
     required this.name,
@@ -25,6 +27,9 @@ class BillItem {
   final String name;
   final double price;
   final List<String> sharedByFriendIds;
+
+  @override
+  List<Object?> get props => [id, name, price, sharedByFriendIds];
 
   bool get isAssigned => sharedByFriendIds.isNotEmpty;
 

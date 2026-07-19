@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/models/friend.dart';
@@ -36,12 +37,40 @@ class _HomeScreenState extends State<HomeScreen> {
       uid: user.uid,
     );
     _friendsStream = _repository.watchFriends();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _resumeLostScan());
   }
 
   @override
   void dispose() {
     _searchQuery.dispose();
     super.dispose();
+  }
+
+  /// Android may kill the app while the system camera is open; the app then
+  /// restarts from scratch and lands here. If image_picker is holding the
+  /// photo taken before the kill, jump straight back into the scan flow.
+  Future<void> _resumeLostScan() async {
+    try {
+      final LostDataResponse response =
+          await ImagePicker().retrieveLostData();
+      if (!mounted || response.isEmpty) {
+        return;
+      }
+      final List<XFile>? files = response.files;
+      if (files == null || files.isEmpty) {
+        return;
+      }
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Recovered your bill photo — continuing the scan.'),
+          ),
+        );
+      _push(ScanScreen(initialImagePath: files.first.path));
+    } on Exception {
+      // Nothing to resume; stay on the dashboard.
+    }
   }
 
   Future<void> _addFriend() async {

@@ -45,6 +45,7 @@ dependencies:
   intl: ^0.20.3
   url_launcher: ^6.3.2
   share_plus: ^13.2.1
+  equatable: ^2.1.0
 
 dev_dependencies:
   flutter_test:

@@ -1,7 +1,9 @@
+import 'package:equatable/equatable.dart';
+
 import '../../../core/models/bill_item.dart';
 
 /// Result of parsing raw OCR text from a restaurant bill.
-class ParsedBill {
+class ParsedBill extends Equatable {
   const ParsedBill({
     required this.items,
     required this.taxAmount,
@@ -12,6 +14,9 @@ class ParsedBill {
   final double taxAmount;
 
   final double? detectedTotal;
+
+  @override
+  List<Object?> get props => [items, taxAmount, detectedTotal];
 }
 
 abstract final class BillParser {

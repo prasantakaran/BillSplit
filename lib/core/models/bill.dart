@@ -1,3 +1,5 @@
+import 'package:equatable/equatable.dart';
+
 import 'bill_item.dart';
 import 'settlement.dart';
 
@@ -5,7 +7,7 @@ import 'settlement.dart';
 ///
 /// [createdAt] is stored as milliseconds since epoch so the model stays free
 /// of Firebase types and fully unit-testable.
-class Bill {
+class Bill extends Equatable {
   const Bill({
     required this.id,
     required this.restaurantName,
@@ -41,6 +43,10 @@ class Bill {
   final double taxAmount;
   final double totalAmount;
   final List<Settlement> settlements;
+
+  @override
+  List<Object?> get props =>
+      [id, restaurantName, createdAt, items, taxAmount, totalAmount, settlements];
 
   /// Sum of all item prices, before tax.
   double get itemsSubtotal => items.fold(0, (sum, item) => sum + item.price);

@@ -14,7 +14,11 @@ import '../widgets/scan_placeholder.dart';
 import 'edit_items_screen.dart';
 
 class ScanScreen extends StatefulWidget {
-  const ScanScreen({super.key});
+  const ScanScreen({super.key, this.initialImagePath});
+
+  /// Bill photo recovered after Android killed the app while the camera
+  /// was open; shown immediately instead of the empty picker state.
+  final String? initialImagePath;
 
   @override
   State<ScanScreen> createState() => _ScanScreenState();
@@ -30,7 +34,11 @@ class _ScanScreenState extends State<ScanScreen> {
   @override
   void initState() {
     super.initState();
-    _recoverLostImage();
+    if (widget.initialImagePath != null) {
+      _imagePath.value = widget.initialImagePath;
+    } else {
+      _recoverLostImage();
+    }
   }
 
   /// Android may destroy the Flutter activity while the system camera is open.

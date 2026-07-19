@@ -1,9 +1,15 @@
-/// A person the user splits bills with.
-///
-/// Pure Dart — Firestore document id is kept outside [toMap] and supplied
-/// back through [Friend.fromMap].
-class Friend {
+import 'package:equatable/equatable.dart';
+
+class Friend extends Equatable {
+  final String id;
+  final String name;
+  final String? upiId;
+  final String? phone;
+
   const Friend({required this.id, required this.name, this.upiId, this.phone});
+
+  @override
+  List<Object?> get props => [id, name, upiId, phone];
 
   factory Friend.fromMap(String id, Map<String, dynamic> map) {
     return Friend(
@@ -13,11 +19,6 @@ class Friend {
       phone: map['phone'] as String?,
     );
   }
-
-  final String id;
-  final String name;
-  final String? upiId;
-  final String? phone;
 
   Map<String, dynamic> toMap() {
     return {
