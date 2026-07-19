@@ -16,6 +16,7 @@ class BillFlowState extends ChangeNotifier {
   List<BillItem> _items = [];
   double _taxAmount = 0;
   double? _detectedTotal;
+  double? _detectedSubtotal;
 
   String get restaurantName => _restaurantName;
   List<BillItem> get items => List.unmodifiable(_items);
@@ -23,6 +24,14 @@ class BillFlowState extends ChangeNotifier {
 
   /// The grand total printed on the scanned bill, if OCR found one.
   double? get detectedTotal => _detectedTotal;
+
+  /// The pre-tax subtotal printed on the scanned bill, if OCR found one.
+  double? get detectedSubtotal => _detectedSubtotal;
+
+  /// True when the printed subtotal exists but the current items don't sum
+  /// to it — a sign that some prices still need a manual check.
+  bool get subtotalMismatch =>
+      _detectedSubtotal != null && (subtotal - _detectedSubtotal!).abs() > 0.01;
 
   double get subtotal => _items.fold(0, (sum, item) => sum + item.price);
   double get grandTotal => subtotal + _taxAmount;
@@ -38,6 +47,7 @@ class BillFlowState extends ChangeNotifier {
     List<BillItem> items = const [],
     double taxAmount = 0,
     double? detectedTotal,
+    double? detectedSubtotal,
     String restaurantName = '',
   }) {
     _items = items
@@ -45,6 +55,7 @@ class BillFlowState extends ChangeNotifier {
         .toList(growable: true);
     _taxAmount = taxAmount;
     _detectedTotal = detectedTotal;
+    _detectedSubtotal = detectedSubtotal;
     _restaurantName = restaurantName;
     notifyListeners();
   }
@@ -101,6 +112,7 @@ class BillFlowState extends ChangeNotifier {
     _items = [];
     _taxAmount = 0;
     _detectedTotal = null;
+    _detectedSubtotal = null;
     notifyListeners();
   }
 }

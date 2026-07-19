@@ -112,6 +112,7 @@ class _ScanScreenState extends State<ScanScreen> {
         items: parsed.items,
         taxAmount: parsed.taxAmount,
         detectedTotal: parsed.detectedTotal,
+        detectedSubtotal: parsed.detectedSubtotal,
       );
       if (parsed.items.isEmpty) {
         _showMessage(

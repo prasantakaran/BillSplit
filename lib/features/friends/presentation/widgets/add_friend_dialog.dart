@@ -64,56 +64,58 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
         padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Add Friend',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.lightTextPrimary,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Add Friend',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.lightTextPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              AppTextField(
-                controller: _nameController,
-                hint: 'Full name',
-                prefixIcon: Icons.person_outline,
-                textInputAction: TextInputAction.next,
-                validator: Validators.fullName,
-              ),
-              const SizedBox(height: 16),
-              AppTextField(
-                controller: _upiController,
-                hint: 'UPI ID (optional)',
-                prefixIcon: Icons.currency_rupee,
-                textInputAction: TextInputAction.next,
-                validator: Validators.upiId,
-              ),
-              const SizedBox(height: 16),
-              AppTextField(
-                controller: _phoneController,
-                hint: 'Mobile number (optional)',
-                prefixIcon: Icons.phone_outlined,
-                keyboardType: TextInputType.phone,
-                textInputAction: TextInputAction.done,
-                onFieldSubmitted: (_) => _submit(),
-                validator: Validators.optionalMobile,
-              ),
-              const SizedBox(height: 24),
-              AppButton(label: 'Add Friend', onPressed: _submit),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(color: AppColors.lightTextSecondary),
+                const SizedBox(height: 20),
+                AppTextField(
+                  controller: _nameController,
+                  hint: 'Full name',
+                  prefixIcon: Icons.person_outline,
+                  textInputAction: TextInputAction.next,
+                  validator: Validators.fullName,
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                AppTextField(
+                  controller: _upiController,
+                  hint: 'UPI ID (optional)',
+                  prefixIcon: Icons.currency_rupee,
+                  textInputAction: TextInputAction.next,
+                  validator: Validators.upiId,
+                ),
+                const SizedBox(height: 16),
+                AppTextField(
+                  controller: _phoneController,
+                  hint: 'Mobile number (optional)',
+                  prefixIcon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _submit(),
+                  validator: Validators.optionalMobile,
+                ),
+                const SizedBox(height: 24),
+                AppButton(label: 'Add Friend', onPressed: _submit),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: AppColors.lightTextSecondary),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

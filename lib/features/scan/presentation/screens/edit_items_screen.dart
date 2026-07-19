@@ -45,6 +45,20 @@ class EditItemsScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+                  if (flow.subtotalMismatch)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        "Items don't add up to the printed Sub-Total "
+                        '(${CurrencyFormatter.format(flow.detectedSubtotal!)})'
+                        ' — please check the prices.',
+                        style: const TextStyle(
+                          color: AppColors.warning,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   for (final BillItem item in flow.items)
                     ItemRow(key: ValueKey(item.id), item: item),
                   const SizedBox(height: 4),

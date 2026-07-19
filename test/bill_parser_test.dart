@@ -81,6 +81,126 @@ THANK YOU. VISIT AGAIN.
       },
     );
 
+    test(
+      'parses thermal Qty/Rate/Amt receipts with payment metadata '
+      '(Tasty Forks receipt)',
+      () {
+        const rawText = '''
+Tasty Forks
+123 Market Road, City
+GSTIN: 22AAAAA0000A1Z5
+Phone: +91 90000 00000
+Bill No: TF-1047
+Date: 2026-02-06 19:32
+Table: 07
+KOT No: KOT-1021
+Cashier: Rita
+Waiter: Aman
+Item Qty Rate Amt
+Paneer Tikka 2 120.00 240.00
+Butter Naan 1 90.00 90.00
+Masala Chai 2 60.00 120.00
+Subtotal 450.00
+Discount 0.00
+Taxable Value 450.00
+CGST (2.5%) 11.25
+SGST (2.5%) 11.25
+Grand Total 472.50
+Payment Mode UPI
+Paid Amount 450.00
+Balance -22.50
+Scan & Pay
+UPI ID: tastyforks@upi
+Name: Tasty Forks
+Thank you! Visit again.
+GST included as applicable
+''';
+
+        final ParsedBill parsed = BillParser.parse(rawText);
+
+        expect(parsed.items.map((item) => item.name).toList(), [
+          'Paneer Tikka',
+          'Butter Naan',
+          'Masala Chai',
+        ]);
+        expect(parsed.items.map((item) => item.price).toList(), [
+          240.00,
+          90.00,
+          120.00,
+        ]);
+        // "Taxable Value 450.00" must not inflate the tax.
+        expect(parsed.taxAmount, closeTo(22.50, 0.001));
+        expect(parsed.detectedSubtotal, 450.00);
+        expect(parsed.detectedTotal, 472.50);
+      },
+    );
+
+    test('corrects a ₹-misread price on a plain bill via the printed subtotal',
+        () {
+      const rawText = '''
+Filter Coffee 745
+Masala Dosa 120
+Subtotal 165.00
+CGST 2.5% 4.13
+SGST 2.5% 4.12
+Total 173.25
+''';
+
+      final ParsedBill parsed = BillParser.parse(rawText);
+
+      // 745 + 120 ≠ 165, but 45 + 120 = 165 — the only reading that fits.
+      expect(parsed.items.map((item) => item.price).toList(), [45, 120]);
+      expect(parsed.detectedSubtotal, 165.00);
+      expect(parsed.taxAmount, closeTo(8.25, 0.001));
+      expect(parsed.detectedTotal, 173.25);
+    });
+
+    test('normalizes digit-lookalike letters in price tokens', () {
+      const rawText = '''
+Sweet Lassi 8O
+Cold Coffee 1SO
+Subtotal 230.00
+''';
+
+      final ParsedBill parsed = BillParser.parse(rawText);
+
+      expect(parsed.items.map((item) => item.name).toList(), [
+        'Sweet Lassi',
+        'Cold Coffee',
+      ]);
+      expect(parsed.items.map((item) => item.price).toList(), [80, 150]);
+      expect(parsed.detectedSubtotal, 230.00);
+    });
+
+    test('corrects a ₹-misread grand total from subtotal + tax', () {
+      const rawText = '''
+Paneer Tikka 250
+Subtotal 250.00
+CGST 12.50
+Total 7262.50
+''';
+
+      final ParsedBill parsed = BillParser.parse(rawText);
+
+      expect(parsed.items.single.price, 250);
+      expect(parsed.detectedTotal, 262.50);
+    });
+
+    test('leaves prices unchanged when the correction is ambiguous', () {
+      // Either roll alone could be the misread one (45 + 745 or 745 + 45),
+      // so no guess is made and the review screen flags the mismatch.
+      const rawText = '''
+Veg Roll 745
+Egg Roll 745
+Subtotal 790.00
+''';
+
+      final ParsedBill parsed = BillParser.parse(rawText);
+
+      expect(parsed.items.map((item) => item.price).toList(), [745, 745]);
+      expect(parsed.detectedSubtotal, 790.00);
+    });
+
     test('handles currency prefixes and dot leaders', () {
       const rawText = '''
 Masala Dosa ....... Rs. 120.00

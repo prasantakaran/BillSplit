@@ -19,6 +19,9 @@ abstract final class AppColors {
   /// Used for amounts the user owes a friend.
   static const Color negativeAmount = Color(0xFFC62828);
 
+  /// Non-blocking warnings, e.g. items not matching the printed subtotal.
+  static const Color warning = Color(0xFFB45309);
+
   // ---------------------------------------------------------------------
   // Light theme surface & text colours.
   // ---------------------------------------------------------------------

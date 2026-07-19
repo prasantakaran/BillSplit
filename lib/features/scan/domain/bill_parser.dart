@@ -8,6 +8,7 @@ class ParsedBill extends Equatable {
     required this.items,
     required this.taxAmount,
     this.detectedTotal,
+    this.detectedSubtotal,
   });
 
   final List<BillItem> items;
@@ -15,8 +16,12 @@ class ParsedBill extends Equatable {
 
   final double? detectedTotal;
 
+  /// The pre-tax subtotal printed on the bill, if OCR found one. Used to
+  /// cross-check the parsed items and surfaced as a hint on the edit screen.
+  final double? detectedSubtotal;
+
   @override
-  List<Object?> get props => [items, taxAmount, detectedTotal];
+  List<Object?> get props => [items, taxAmount, detectedTotal, detectedSubtotal];
 }
 
 abstract final class BillParser {
@@ -40,11 +45,23 @@ abstract final class BillParser {
   /// Currency marks OCR sometimes splits into their own token.
   static const Set<String> _currencyOnlyTokens = {'rs', 'rs.', 'inr', '₹'};
 
+  /// OCR digit lookalikes inside otherwise-numeric tokens.
+  static const Map<String, String> _digitLookalikes = {
+    'O': '0',
+    'o': '0',
+    'l': '1',
+    'I': '1',
+    'S': '5',
+    's': '5',
+    'B': '8',
+  };
+
   /// Anything larger is OCR noise (pincodes, phone fragments), not a price.
   static const double _maxPlausiblePrice = 99999;
 
-  /// Checked before tax keywords: "GSTIN" contains "gst" but is metadata.
-  static const List<String> _preIgnoreKeywords = ['gstin', 'fssai'];
+  /// Checked before tax keywords: "GSTIN" contains "gst" and "Taxable
+  /// Value" contains "tax", but neither is a tax line.
+  static const List<String> _preIgnoreKeywords = ['gstin', 'fssai', 'taxable'];
 
   static const List<String> _taxKeywords = [
     'cgst',
@@ -73,11 +90,15 @@ abstract final class BillParser {
   ];
 
   /// Other lines that carry a trailing number but are not food items.
+  /// Multi-word forms ("kot no") are used where a bare word could appear
+  /// inside a real dish name ("Kothimbir Vadi").
   static const List<String> _ignoreKeywords = [
     'discount',
     'invoice',
     'bill no',
     'bill#',
+    'kot no',
+    'kot-',
     'order',
     'date',
     'time',
@@ -85,10 +106,16 @@ abstract final class BillParser {
     'guests',
     'pax',
     'qty',
+    'cashier',
+    'waiter',
     'phone',
     'ph:',
     'cash',
     'card',
+    'upi',
+    'payment',
+    'paid',
+    'balance',
     'change',
     'tender',
     'round off',
@@ -98,14 +125,22 @@ abstract final class BillParser {
 
   static ParsedBill parse(String rawText) {
     final List<BillItem> items = [];
+    final List<List<double>> priceVariants = [];
     double taxAmount = 0;
     double? detectedTotal;
+    double? detectedSubtotal;
+    String? totalToken;
 
     for (final String rawLine in rawText.split('\n')) {
-      final String line = rawLine.trim();
-      if (line.isEmpty) {
+      if (rawLine.trim().isEmpty) {
         continue;
       }
+      // Fix digit-lookalike OCR misreads ("8O" → "80") token by token.
+      final String line = rawLine
+          .trim()
+          .split(RegExp(r'\s+'))
+          .map(_normalizeDigits)
+          .join(' ');
 
       final RegExpMatch? priceMatch = _priceAtEnd.firstMatch(line);
       if (priceMatch == null) {
@@ -128,10 +163,12 @@ abstract final class BillParser {
         continue;
       }
       if (_subtotalKeywords.any(lower.contains)) {
+        detectedSubtotal = price;
         continue;
       }
       if (_totalKeywords.any(lower.contains)) {
         detectedTotal = price;
+        totalToken = priceMatch.group(1)!;
         continue;
       }
       if (_ignoreKeywords.any(lower.contains)) {
@@ -144,8 +181,16 @@ abstract final class BillParser {
       final List<String> tokens = line.split(RegExp(r'\s+'));
       final ({List<String> numbers, int nameEnd}) tail = _numericTail(tokens);
       double itemPrice = price;
+      List<double> variants = tail.numbers.isEmpty
+          ? [price]
+          : _valueVariants(tail.numbers.last);
       if (tail.numbers.length == 3) {
-        itemPrice = _resolveTabularAmount(tail.numbers) ?? price;
+        final double? validated = _resolveTabularAmount(tail.numbers);
+        if (validated != null) {
+          itemPrice = validated;
+          // Proven by rate × qty — locked against later reconciliation.
+          variants = [validated];
+        }
       }
 
       String name = tokens.sublist(0, tail.nameEnd).join(' ');
@@ -159,13 +204,103 @@ abstract final class BillParser {
       items.add(
         BillItem(id: 'item-${items.length}', name: name, price: itemPrice),
       );
+      priceVariants.add(variants);
+    }
+
+    // Cross-check the item sum against the printed subtotal (or total − tax)
+    // and apply the unique ₹-misread correction combination if one exists.
+    final double? reference =
+        detectedSubtotal ??
+        (detectedTotal != null ? detectedTotal - taxAmount : null);
+    if (reference != null && reference > 0 && items.isNotEmpty) {
+      final double itemsSum = items.fold(0.0, (sum, item) => sum + item.price);
+      if ((itemsSum - reference).abs() > 0.01) {
+        final List<double>? corrected = _reconcilePrices(
+          priceVariants,
+          reference,
+        );
+        if (corrected != null) {
+          for (int i = 0; i < items.length; i++) {
+            if ((items[i].price - corrected[i]).abs() > 0.001) {
+              items[i] = items[i].copyWith(price: corrected[i]);
+            }
+          }
+        }
+      }
+    }
+
+    // A misread grand total is provable from subtotal + tax.
+    if (detectedSubtotal != null && detectedTotal != null && totalToken != null) {
+      final double expected = detectedSubtotal + taxAmount;
+      if ((detectedTotal - expected).abs() > 0.01) {
+        for (final double variant in _valueVariants(totalToken)) {
+          if ((variant - expected).abs() < 0.01) {
+            detectedTotal = variant;
+            break;
+          }
+        }
+      }
     }
 
     return ParsedBill(
       items: items,
       taxAmount: taxAmount,
       detectedTotal: detectedTotal,
+      detectedSubtotal: detectedSubtotal,
     );
+  }
+
+  /// Replaces digit-lookalike letters when the token contains a real digit
+  /// and the result is fully numeric ("8O" → "80"); otherwise the token is
+  /// returned unchanged so real words are never altered.
+  static String _normalizeDigits(String token) {
+    if (_numericToken.hasMatch(token) || !token.contains(RegExp(r'[0-9]'))) {
+      return token;
+    }
+    final String replaced = token
+        .split('')
+        .map((char) => _digitLookalikes[char] ?? char)
+        .join();
+    return _numericToken.hasMatch(replaced) ? replaced : token;
+  }
+
+  /// Finds the unique combination of per-item price readings that sums to
+  /// [target]. Returns null when none — or more than one — combination
+  /// matches, so ambiguous bills are never guessed at.
+  static List<double>? _reconcilePrices(
+    List<List<double>> variants,
+    double target,
+  ) {
+    final int ambiguous = variants.where((v) => v.length > 1).length;
+    if (ambiguous == 0 || ambiguous > 15) {
+      return null;
+    }
+    int matches = 0;
+    List<double>? result;
+    final List<double> current = List.filled(variants.length, 0);
+
+    void search(int index, double sum) {
+      // Prices are positive, so overshooting the target can never recover.
+      if (matches > 1 || sum - target > 0.01) {
+        return;
+      }
+      if (index == variants.length) {
+        if ((sum - target).abs() <= 0.01) {
+          matches++;
+          if (matches == 1) {
+            result = List.of(current);
+          }
+        }
+        return;
+      }
+      for (final double value in variants[index]) {
+        current[index] = value;
+        search(index + 1, sum + value);
+      }
+    }
+
+    search(0, 0);
+    return matches == 1 ? result : null;
   }
 
   /// Collects up to three trailing numeric column tokens from a tokenized
@@ -218,20 +353,30 @@ abstract final class BillParser {
     return variants;
   }
 
-  /// For a [rate, qty, amount] column tail, returns the line amount —
-  /// validated by rate × qty == amount across ₹-misread candidates — or
-  /// null when the columns don't multiply out.
+  /// For a 3-number column tail, returns the validated line amount.
+  /// Receipts print either [rate, qty, amount] or [qty, rate, amount], so
+  /// both orders are tried, across ₹-misread candidates. Null when the
+  /// columns don't multiply out either way.
   static double? _resolveTabularAmount(List<String> numbers) {
+    return _validateColumns(numbers[0], numbers[1], numbers[2]) ??
+        _validateColumns(numbers[1], numbers[0], numbers[2]);
+  }
+
+  static double? _validateColumns(
+    String rateToken,
+    String qtyToken,
+    String amountToken,
+  ) {
     final String qtyDigits = _numericToken
-        .firstMatch(numbers[1])!
+        .firstMatch(qtyToken)!
         .group(1)!
         .replaceAll(',', '');
     final int? qty = int.tryParse(qtyDigits);
     if (qty == null || qty < 1 || qty > 99) {
       return null;
     }
-    for (final double rate in _valueVariants(numbers[0])) {
-      for (final double amount in _valueVariants(numbers[2])) {
+    for (final double rate in _valueVariants(rateToken)) {
+      for (final double amount in _valueVariants(amountToken)) {
         if (amount > 0 &&
             amount <= _maxPlausiblePrice &&
             (rate * qty - amount).abs() < 0.01) {
