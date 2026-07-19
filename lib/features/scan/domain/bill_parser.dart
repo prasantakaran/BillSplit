@@ -1,18 +1,26 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../core/models/bill_item.dart';
+import '../../../core/models/tax_line.dart';
 
 /// Result of parsing raw OCR text from a restaurant bill.
 class ParsedBill extends Equatable {
   const ParsedBill({
     required this.items,
     required this.taxAmount,
+    this.taxLines = const [],
     this.detectedTotal,
     this.detectedSubtotal,
   });
 
   final List<BillItem> items;
+
+  /// Sum of all tax/charge lines; [taxLines] holds the printed breakdown.
   final double taxAmount;
+
+  /// Each tax/charge line as printed on the bill (CGST, SGST, service
+  /// charge, ...), for display on the edit screen.
+  final List<TaxLine> taxLines;
 
   final double? detectedTotal;
 
@@ -21,7 +29,8 @@ class ParsedBill extends Equatable {
   final double? detectedSubtotal;
 
   @override
-  List<Object?> get props => [items, taxAmount, detectedTotal, detectedSubtotal];
+  List<Object?> get props =>
+      [items, taxAmount, taxLines, detectedTotal, detectedSubtotal];
 }
 
 abstract final class BillParser {
@@ -103,8 +112,12 @@ abstract final class BillParser {
   static const List<String> _ignoreKeywords = [
     'discount',
     'invoice',
+    'inv-',
+    'receipt',
     'bill no',
     'bill#',
+    'customer',
+    'contact',
     'kot no',
     'kot-',
     'order',
@@ -137,6 +150,8 @@ abstract final class BillParser {
   static ParsedBill parse(String rawText) {
     final List<BillItem> items = [];
     final List<List<double>> priceVariants = [];
+    final List<TaxLine> taxLines = [];
+    final List<String> taxTokens = [];
     double taxAmount = 0;
     double? detectedTotal;
     double? detectedSubtotal;
@@ -146,10 +161,12 @@ abstract final class BillParser {
       if (rawLine.trim().isEmpty) {
         continue;
       }
-      // Fix digit-lookalike OCR misreads ("8O" → "80") token by token, then
+      // Normalize em/en dashes so keyword and cleanup rules see plain '-',
+      // fix digit-lookalike OCR misreads ("8O" → "80") token by token, then
       // detach a price glued straight onto the last word of the name.
       final String line = rawLine
           .trim()
+          .replaceAll(RegExp('[—–]'), '-')
           .split(RegExp(r'\s+'))
           .map(_normalizeDigits)
           .join(' ')
@@ -176,6 +193,15 @@ abstract final class BillParser {
       }
       if (_taxKeywords.any(lower.contains)) {
         taxAmount += price;
+        final String label = line
+            .substring(0, priceMatch.start)
+            .trim()
+            .replaceAll(RegExp(r'[.\-_:·]+$'), '')
+            .trim();
+        taxLines.add(
+          TaxLine(label: label.isEmpty ? 'Tax' : label, amount: price),
+        );
+        taxTokens.add(priceMatch.group(1)!);
         continue;
       }
       if (_subtotalKeywords.any(lower.contains)) {
@@ -245,6 +271,34 @@ abstract final class BillParser {
       }
     }
 
+    // Cross-check the tax lines: printed subtotal + taxes must equal the
+    // printed total. When they don't, correct ₹-misread tax amounts — first
+    // via reading variants, then by recomputing from the percentages printed
+    // in the labels ("CGST (2.5%)") — but only if the equation then balances.
+    if (detectedSubtotal != null &&
+        detectedTotal != null &&
+        taxLines.isNotEmpty) {
+      final double taxTarget = detectedTotal - detectedSubtotal;
+      if (taxTarget > 0 && (taxAmount - taxTarget).abs() > 0.01) {
+        final List<double>? correctedTaxes =
+            _reconcilePrices(
+              [for (final String token in taxTokens) _valueVariants(token)],
+              taxTarget,
+            ) ??
+            _taxesFromPercentages(taxLines, detectedSubtotal, taxTarget);
+        if (correctedTaxes != null) {
+          taxAmount = 0;
+          for (int i = 0; i < taxLines.length; i++) {
+            taxLines[i] = TaxLine(
+              label: taxLines[i].label,
+              amount: correctedTaxes[i],
+            );
+            taxAmount += correctedTaxes[i];
+          }
+        }
+      }
+    }
+
     // A misread grand total is provable from subtotal + tax.
     if (detectedSubtotal != null && detectedTotal != null && totalToken != null) {
       final double expected = detectedSubtotal + taxAmount;
@@ -261,6 +315,7 @@ abstract final class BillParser {
     return ParsedBill(
       items: items,
       taxAmount: taxAmount,
+      taxLines: taxLines,
       detectedTotal: detectedTotal,
       detectedSubtotal: detectedSubtotal,
     );
@@ -278,6 +333,33 @@ abstract final class BillParser {
         .map((char) => _digitLookalikes[char] ?? char)
         .join();
     return _numericToken.hasMatch(replaced) ? replaced : token;
+  }
+
+  static final RegExp _percentInLabel = RegExp(r'([0-9]+(?:\.[0-9]+)?)\s*%');
+
+  /// Recomputes tax lines from the percentages printed in their labels
+  /// ("CGST (2.5%)" → 2.5% of the subtotal); lines without a percentage
+  /// keep their read amount. Applied only when the recomputed taxes make
+  /// subtotal + taxes equal the printed total, so partial-base taxes
+  /// (e.g. VAT on liquor only) are never wrongly recomputed.
+  static List<double>? _taxesFromPercentages(
+    List<TaxLine> taxLines,
+    double subtotal,
+    double target,
+  ) {
+    final List<double> computed = [];
+    for (final TaxLine tax in taxLines) {
+      final RegExpMatch? percent = _percentInLabel.firstMatch(tax.label);
+      if (percent == null) {
+        computed.add(tax.amount);
+      } else {
+        final double value =
+            subtotal * double.parse(percent.group(1)!) / 100;
+        computed.add((value * 100).roundToDouble() / 100);
+      }
+    }
+    final double sum = computed.fold(0.0, (a, b) => a + b);
+    return (sum - target).abs() <= 0.02 ? computed : null;
   }
 
   /// Finds the unique combination of per-item price readings that sums to

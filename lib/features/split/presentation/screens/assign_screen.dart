@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/models/friend.dart';
 import '../../../../core/models/settlement.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../friends/data/repositories/friends_repository.dart';
 import '../../../friends/presentation/widgets/add_friend_dialog.dart';
 import '../../domain/settlement_calculator.dart';
@@ -64,7 +65,7 @@ class _AssignScreenState extends State<AssignScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
-      appBar: AppBar(title: const Text('Assign Items')),
+      appBar: const AppTopBar(title: 'Assign Items'),
       body: SafeArea(
         child: StreamBuilder<List<Friend>>(
           stream: _friendsStream,

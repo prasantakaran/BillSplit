@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/models/friend.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/app_top_bar.dart';
 import '../../data/repositories/friends_repository.dart';
 import '../widgets/add_friend_dialog.dart';
 import '../widgets/friend_card.dart';
@@ -92,7 +93,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
-      appBar: AppBar(title: const Text('Friends')),
+      appBar: const AppTopBar(title: 'Friends'),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addFriend,
         backgroundColor: AppColors.brandBlue,

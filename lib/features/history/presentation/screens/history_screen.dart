@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/models/bill.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/app_top_bar.dart';
 import '../../data/repositories/bills_repository.dart';
 import '../widgets/bill_card.dart';
 import '../widgets/bill_detail_sheet.dart';
@@ -20,9 +21,14 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   static final DateFormat _dateFormat = DateFormat('d MMM yyyy, h:mm a');
+  static final DateFormat _rangeDateFormat = DateFormat('d MMM yyyy');
 
   late final BillsRepository _repository;
   late final Stream<List<Bill>> _billsStream;
+  final TextEditingController _searchController = TextEditingController();
+
+  String _searchQuery = '';
+  DateTime? _selectedDate;
 
   @override
   void initState() {
@@ -33,6 +39,44 @@ class _HistoryScreenState extends State<HistoryScreen> {
       uid: user.uid,
     );
     _billsStream = _repository.watchBills();
+    _searchController.addListener(() {
+      setState(() => _searchQuery = _searchController.text.trim());
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Bill> _applyFilters(List<Bill> bills) {
+    final String query = _searchQuery.toLowerCase();
+    return bills.where((bill) {
+      final bool matchesQuery =
+          query.isEmpty || bill.restaurantName.toLowerCase().contains(query);
+      final bool matchesDate = _selectedDate == null ||
+          (bill.createdAt.year == _selectedDate!.year &&
+              bill.createdAt.month == _selectedDate!.month &&
+              bill.createdAt.day == _selectedDate!.day);
+      return matchesQuery && matchesDate;
+    }).toList();
+  }
+
+  Future<void> _pickDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+      initialDate: _selectedDate ?? DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() => _selectedDate = picked);
+    }
+  }
+
+  void _clearDate() {
+    setState(() => _selectedDate = null);
   }
 
   Future<void> _confirmDelete(Bill bill) async {
@@ -95,44 +139,124 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
-      appBar: AppBar(title: const Text('Bill History')),
-      body: StreamBuilder<List<Bill>>(
-        stream: _billsStream,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'Could not load bills.\n${snapshot.error}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.lightTextSecondary),
+      appBar: const AppTopBar(title: 'Bill History'),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search by restaurant name',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _searchQuery.isEmpty
+                          ? null
+                          : IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: _searchController.clear,
+                            ),
+                      filled: true,
+                      fillColor: AppColors.lightSurface,
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 0,
+                        horizontal: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: AppColors.lightBorder,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton.filledTonal(
+                  tooltip: 'Filter by date',
+                  onPressed: _pickDate,
+                  icon: Icon(
+                    Icons.calendar_month,
+                    color: _selectedDate == null
+                        ? AppColors.lightTextSecondary
+                        : AppColors.brandBlue,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_selectedDate != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: InputChip(
+                  label: Text(_rangeDateFormat.format(_selectedDate!)),
+                  avatar: const Icon(Icons.date_range, size: 18),
+                  onDeleted: _clearDate,
                 ),
               ),
-            );
-          }
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final List<Bill> bills = snapshot.data!;
-          if (bills.isEmpty) {
-            return const EmptyHistory();
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: bills.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final Bill bill = bills[index];
-              return BillCard(
-                bill: bill,
-                dateText: _dateFormat.format(bill.createdAt),
-                onTap: () => _showBillDetail(bill),
-                onDelete: () => _confirmDelete(bill),
-              );
-            },
-          );
-        },
+            ),
+          Expanded(
+            child: StreamBuilder<List<Bill>>(
+              stream: _billsStream,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        'Could not load bills.\n${snapshot.error}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AppColors.lightTextSecondary,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final List<Bill> bills = snapshot.data!;
+                if (bills.isEmpty) {
+                  return const EmptyHistory();
+                }
+                final List<Bill> filteredBills = _applyFilters(bills);
+                if (filteredBills.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        'No bills match your search or date filter.',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AppColors.lightTextSecondary,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filteredBills.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final Bill bill = filteredBills[index];
+                    return BillCard(
+                      bill: bill,
+                      dateText: _dateFormat.format(bill.createdAt),
+                      onTap: () => _showBillDetail(bill),
+                      onDelete: () => _confirmDelete(bill),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

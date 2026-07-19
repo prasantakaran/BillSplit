@@ -203,6 +203,117 @@ CASHIER :VISHAL
       },
     );
 
+    test(
+      'parses qty-x rows with ₹ amounts and em-dash metadata '
+      '(Cedarstay Hotels receipt)',
+      () {
+        const rawText = '''
+Cedarstay Hotels
+56 Civic Center, Mumbai, West
+Bengal 997697
+CONTACT NO: 9665514626
+Date: Time: 16:03 Table: 11,
+07/01/2026 12
+RECEIPT NO — INV—2025—2745
+CUSTOMER — Diya Sharma
+PAYMENT MODE — card
+GSTIN: 21NIHBG5941M7Z5
+4 x Veg Biryani ₹360.00
+2 x Veg Biryani ₹678.00
+2 x Veg Biryani ₹658.00
+2 x Hakka Noodles ₹538.00
+3 x Hakka Noodles ₹657.00
+1 x Butter Naan ₹699.00
+SUBTOTAL: ₹3,590.00
+CGST (2.5%): ₹89.75
+SGST (2.5%): ₹89.75
+TOTAL: ₹3,769.50
+THANK YOU. VISIT AGAIN.
+THANK YOU
+''';
+
+        final ParsedBill parsed = BillParser.parse(rawText);
+
+        expect(parsed.items.map((item) => item.name).toList(), [
+          'Veg Biryani',
+          'Veg Biryani',
+          'Veg Biryani',
+          'Hakka Noodles',
+          'Hakka Noodles',
+          'Butter Naan',
+        ]);
+        expect(parsed.items.map((item) => item.price).toList(), [
+          360.00,
+          678.00,
+          658.00,
+          538.00,
+          657.00,
+          699.00,
+        ]);
+        expect(parsed.taxAmount, closeTo(179.50, 0.001));
+        expect(
+          parsed.taxLines.map((tax) => tax.label).toList(),
+          ['CGST (2.5%)', 'SGST (2.5%)'],
+        );
+        expect(
+          parsed.taxLines.map((tax) => tax.amount).toList(),
+          [89.75, 89.75],
+        );
+        expect(parsed.detectedSubtotal, 3590.00);
+        expect(parsed.detectedTotal, 3769.50);
+      },
+    );
+
+    test('corrects ₹-misread tax amounts via subtotal + taxes = total', () {
+      // "₹89.75" read as "789.75" on both tax lines; 3590 + 179.50 = 3769.50
+      // proves the right reading.
+      const rawText = '''
+4 x Veg Biryani ₹360.00
+2 x Veg Biryani ₹678.00
+2 x Veg Biryani ₹658.00
+2 x Hakka Noodles ₹538.00
+3 x Hakka Noodles ₹657.00
+1 x Butter Naan ₹699.00
+SUBTOTAL: ₹3,590.00
+CGST (2.5%): 789.75
+SGST (2.5%): 789.75
+TOTAL: ₹3,769.50
+''';
+
+      final ParsedBill parsed = BillParser.parse(rawText);
+
+      expect(parsed.taxLines.map((tax) => tax.amount).toList(), [
+        89.75,
+        89.75,
+      ]);
+      expect(parsed.taxAmount, closeTo(179.50, 0.001));
+    });
+
+    test('recomputes badly-misread taxes from label percentages', () {
+      // SGST mangled beyond a single ₹-strip ("789.25"); the printed 2.5%
+      // of the subtotal (89.75 each) balances the total, so it is used.
+      const rawText = '''
+4 x Veg Biryani ₹360.00
+2 x Veg Biryani ₹678.00
+2 x Veg Biryani ₹658.00
+2 x Hakka Noodles ₹538.00
+3 x Hakka Noodles ₹657.00
+1 x Butter Naan ₹699.00
+SUBTOTAL: ₹3,590.00
+CGST (2.5%): 789.75
+SGST (2.5%): 789.25
+TOTAL: ₹3,769.50
+''';
+
+      final ParsedBill parsed = BillParser.parse(rawText);
+
+      expect(parsed.taxLines.map((tax) => tax.amount).toList(), [
+        89.75,
+        89.75,
+      ]);
+      expect(parsed.taxAmount, closeTo(179.50, 0.001));
+    });
+
     test('corrects a ₹-misread price on a plain bill via the printed subtotal',
         () {
       const rawText = '''

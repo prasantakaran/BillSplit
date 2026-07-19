@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/models/friend.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../auth/data/services/auth_service.dart';
 import '../../../friends/data/repositories/friends_repository.dart';
 import '../../../friends/presentation/screens/friends_screen.dart';
@@ -104,8 +105,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
-      appBar: AppBar(
-        title: const Text('BillSplit'),
+      appBar: AppTopBar(
+        title: 'BillSplit',
         actions: [
           IconButton(
             tooltip: 'Bill history',

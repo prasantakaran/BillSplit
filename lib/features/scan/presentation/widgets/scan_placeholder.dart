@@ -35,7 +35,8 @@ class ScanPlaceholder extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 32),
               child: Text(
-                'Keep the bill flat and well lit for the best results.',
+                'Keep the bill flat and well lit. After picking, crop to '
+                'the items, tax and total section for the best results.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.lightTextSecondary),
               ),

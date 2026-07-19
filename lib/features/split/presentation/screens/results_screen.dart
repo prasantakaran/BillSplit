@@ -14,6 +14,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/upi_link_builder.dart';
 import '../../../../core/utils/validation.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../history/data/repositories/bills_repository.dart';
 import '../../domain/payment_message_builder.dart';
 import '../providers/bill_flow_state.dart';
@@ -160,7 +161,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
-      appBar: AppBar(title: const Text('Split Results')),
+      appBar: const AppTopBar(title: 'Split Results'),
       body: SafeArea(
         child: Column(
           children: [

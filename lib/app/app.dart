@@ -30,9 +30,9 @@ class BillSplitApp extends StatelessWidget {
         theme: AppTheme.light.copyWith(
           textTheme: AppTheme.light.textTheme.apply(fontFamily: 'Outfit'),
         ),
-        darkTheme: AppTheme.dark.copyWith(
-          textTheme: AppTheme.dark.textTheme.apply(fontFamily: 'Outfit'),
-        ),
+        // Light-only: the app always renders the light theme regardless of
+        // the device dark-mode setting.
+        themeMode: ThemeMode.light,
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(
             textScaler: MediaQuery.textScalerOf(

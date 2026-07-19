@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../split/presentation/providers/bill_flow_state.dart';
 import '../../data/services/ocr_service.dart';
 import '../../domain/bill_parser.dart';
@@ -88,9 +89,17 @@ class _ScanScreenState extends State<ScanScreen> {
       if (picked == null) {
         return;
       }
-      // Cropping to just the bill removes background clutter, which
-      // noticeably improves OCR accuracy.
-      _imagePath.value = await _cropImage(picked.path) ?? picked.path;
+      // Cropping is required: keeping only the items, tax and total section
+      // removes background clutter and noticeably improves OCR accuracy.
+      final String? cropped = await _cropImage(picked.path);
+      if (cropped == null) {
+        _showMessage(
+          'Please crop the photo to the items, tax and total section '
+          'of the bill to continue.',
+        );
+        return;
+      }
+      _imagePath.value = cropped;
     } on Exception catch (e) {
       _showMessage(
         'Could not open '
@@ -100,7 +109,7 @@ class _ScanScreenState extends State<ScanScreen> {
   }
 
   /// Opens the crop UI for the picked photo. Returns null when the user
-  /// backs out, in which case the uncropped photo is used as-is.
+  /// backs out.
   Future<String?> _cropImage(String sourcePath) async {
     try {
       final CroppedFile? cropped = await ImageCropper().cropImage(
@@ -108,13 +117,13 @@ class _ScanScreenState extends State<ScanScreen> {
         compressQuality: 90,
         uiSettings: [
           AndroidUiSettings(
-            toolbarTitle: 'Crop Bill',
+            toolbarTitle: 'Crop: Items + Tax + Total',
             toolbarColor: AppColors.brandBlue,
             toolbarWidgetColor: Colors.white,
             activeControlsWidgetColor: AppColors.brandBlue,
             lockAspectRatio: false,
           ),
-          IOSUiSettings(title: 'Crop Bill'),
+          IOSUiSettings(title: 'Crop: Items + Tax + Total'),
         ],
       );
       return cropped?.path;
@@ -152,6 +161,7 @@ class _ScanScreenState extends State<ScanScreen> {
       context.read<BillFlowState>().startNewBill(
         items: parsed.items,
         taxAmount: parsed.taxAmount,
+        taxLines: parsed.taxLines,
         detectedTotal: parsed.detectedTotal,
         detectedSubtotal: parsed.detectedSubtotal,
       );
@@ -185,7 +195,7 @@ class _ScanScreenState extends State<ScanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
-      appBar: AppBar(title: const Text('Scan Bill')),
+      appBar: const AppTopBar(title: 'Scan Bill'),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),

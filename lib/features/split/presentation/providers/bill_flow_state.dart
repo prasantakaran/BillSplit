@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/models/bill_item.dart';
+import '../../../../core/models/tax_line.dart';
 
 /// Holds the draft bill through the temporary Scan -> Edit -> Assign ->
 /// Settle flow.
@@ -15,6 +16,7 @@ class BillFlowState extends ChangeNotifier {
   String _restaurantName = '';
   List<BillItem> _items = [];
   double _taxAmount = 0;
+  List<TaxLine> _taxLines = const [];
   double? _detectedTotal;
   double? _detectedSubtotal;
 
@@ -27,6 +29,10 @@ class BillFlowState extends ChangeNotifier {
 
   /// The pre-tax subtotal printed on the scanned bill, if OCR found one.
   double? get detectedSubtotal => _detectedSubtotal;
+
+  /// The tax/charge lines printed on the scanned bill (CGST, SGST, service
+  /// charge, ...); display-only breakdown of the editable [taxAmount].
+  List<TaxLine> get taxLines => List.unmodifiable(_taxLines);
 
   /// True when the printed subtotal exists but the current items don't sum
   /// to it — a sign that some prices still need a manual check.
@@ -46,6 +52,7 @@ class BillFlowState extends ChangeNotifier {
   void startNewBill({
     List<BillItem> items = const [],
     double taxAmount = 0,
+    List<TaxLine> taxLines = const [],
     double? detectedTotal,
     double? detectedSubtotal,
     String restaurantName = '',
@@ -54,6 +61,7 @@ class BillFlowState extends ChangeNotifier {
         .map((item) => item.copyWith(id: _uuid.v4()))
         .toList(growable: true);
     _taxAmount = taxAmount;
+    _taxLines = taxLines;
     _detectedTotal = detectedTotal;
     _detectedSubtotal = detectedSubtotal;
     _restaurantName = restaurantName;
@@ -111,6 +119,7 @@ class BillFlowState extends ChangeNotifier {
     _restaurantName = '';
     _items = [];
     _taxAmount = 0;
+    _taxLines = const [];
     _detectedTotal = null;
     _detectedSubtotal = null;
     notifyListeners();
