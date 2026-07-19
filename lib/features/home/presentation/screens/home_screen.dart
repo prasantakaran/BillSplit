@@ -5,20 +5,15 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/models/friend.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../shared/widgets/app_text_field.dart';
 import '../../../auth/data/services/auth_service.dart';
 import '../../../friends/data/repositories/friends_repository.dart';
 import '../../../friends/presentation/screens/friends_screen.dart';
 import '../../../friends/presentation/widgets/add_friend_dialog.dart';
-import '../../../friends/presentation/widgets/friend_card.dart';
 import '../../../history/presentation/screens/history_screen.dart';
 import '../../../scan/presentation/screens/scan_screen.dart';
+import '../widgets/filtered_friends_list.dart';
+import '../widgets/home_header.dart';
 
-/// Dashboard shown after sign-in: greeting, searchable live friends list.
-///
-/// Friends come straight from [FriendsRepository.watchFriends] via a plain
-/// [StreamBuilder]; the search query lives in a [ValueNotifier] so typing
-/// only rebuilds the filtered list.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -63,21 +58,15 @@ class _HomeScreenState extends State<HomeScreen> {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          SnackBar(content: Text('Could not add friend: ${e.message ?? e.code}')),
+          SnackBar(
+            content: Text('Could not add friend: ${e.message ?? e.code}'),
+          ),
         );
     }
   }
 
-  List<Friend> _filter(List<Friend> friends, String query) {
-    final String q = query.trim().toLowerCase();
-    if (q.isEmpty) {
-      return friends;
-    }
-    return friends.where((friend) {
-      return friend.name.toLowerCase().contains(q) ||
-          (friend.upiId?.toLowerCase().contains(q) ?? false) ||
-          (friend.phone?.contains(q) ?? false);
-    }).toList();
+  void _push(Widget screen) {
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
   }
 
   @override
@@ -92,11 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             tooltip: 'Bill history',
             icon: const Icon(Icons.history),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const HistoryScreen(),
-              ),
-            ),
+            onPressed: () => _push(const HistoryScreen()),
           ),
           IconButton(
             tooltip: 'Sign out',
@@ -116,73 +101,11 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Welcome,',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: AppColors.lightTextSecondary,
-                    ),
-                  ),
-                  Text(
-                    user?.displayName ?? user?.email ?? 'there',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.lightTextPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _ScanBillCard(
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const ScanScreen(),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  AppTextField(
-                    hint: 'Search friends',
-                    prefixIcon: Icons.search,
-                    textInputAction: TextInputAction.search,
-                    onChanged: (value) => _searchQuery.value = value,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Friends',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.lightTextPrimary,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const FriendsScreen(),
-                          ),
-                        ),
-                        child: const Text(
-                          'See all',
-                          style: TextStyle(
-                            color: AppColors.brandBlue,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            HomeHeader(
+              welcomeName: user?.displayName ?? user?.email ?? 'there',
+              onScanTap: () => _push(const ScanScreen()),
+              onSearchChanged: (value) => _searchQuery.value = value,
+              onSeeAllTap: () => _push(const FriendsScreen()),
             ),
             Expanded(
               child: StreamBuilder<List<Friend>>(
@@ -205,144 +128,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (!snapshot.hasData) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  final List<Friend> friends = snapshot.data!;
-                  return ValueListenableBuilder<String>(
-                    valueListenable: _searchQuery,
-                    builder: (context, query, _) {
-                      if (friends.isEmpty) {
-                        return const _DashboardMessage(
-                          icon: Icons.group_outlined,
-                          title: 'No friends yet',
-                          subtitle: 'Add the people you split bills with.',
-                        );
-                      }
-                      final List<Friend> filtered = _filter(friends, query);
-                      if (filtered.isEmpty) {
-                        return _DashboardMessage(
-                          icon: Icons.search_off,
-                          title: 'No matches',
-                          subtitle: 'No friends match "${query.trim()}".',
-                        );
-                      }
-                      return ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 96),
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 10),
-                        itemBuilder: (context, index) =>
-                            FriendCard(friend: filtered[index]),
-                      );
-                    },
+                  return FilteredFriendsList(
+                    friends: snapshot.data!,
+                    searchQuery: _searchQuery,
                   );
                 },
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// Primary call-to-action: gradient card that starts the scan flow.
-class _ScanBillCard extends StatelessWidget {
-  const _ScanBillCard({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.brandBlue, AppColors.brandTeal],
-            ),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(
-                  Icons.document_scanner_outlined,
-                  color: Colors.white,
-                  size: 26,
-                ),
-              ),
-              const SizedBox(width: 14),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Scan a Bill',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Snap the receipt and split it in seconds',
-                      style: TextStyle(color: Colors.white70, fontSize: 12.5),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DashboardMessage extends StatelessWidget {
-  const _DashboardMessage({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 56, color: AppColors.brandBlue.withValues(alpha: 0.4)),
-          const SizedBox(height: 14),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              color: AppColors.lightTextPrimary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.lightTextSecondary),
-          ),
-        ],
       ),
     );
   }

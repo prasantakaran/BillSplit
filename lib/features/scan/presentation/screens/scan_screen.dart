@@ -9,10 +9,10 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../split/presentation/providers/bill_flow_state.dart';
 import '../../data/services/ocr_service.dart';
 import '../../domain/bill_parser.dart';
+import '../widgets/image_source_buttons.dart';
+import '../widgets/scan_placeholder.dart';
 import 'edit_items_screen.dart';
 
-/// Entry point of the bill flow: photograph or pick a bill image, run
-/// on-device OCR, parse it into items, and continue to the edit screen.
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
 
@@ -101,18 +101,18 @@ class _ScanScreenState extends State<ScanScreen> {
         return;
       }
       context.read<BillFlowState>().startNewBill(
-            items: parsed.items,
-            taxAmount: parsed.taxAmount,
-            detectedTotal: parsed.detectedTotal,
-          );
+        items: parsed.items,
+        taxAmount: parsed.taxAmount,
+        detectedTotal: parsed.detectedTotal,
+      );
       if (parsed.items.isEmpty) {
         _showMessage(
           'No items detected — you can add them manually on the next screen.',
         );
       }
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const EditItemsScreen()),
-      );
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute<void>(builder: (_) => const EditItemsScreen()));
     } on Exception catch (e) {
       _showMessage('Could not read the bill: $e');
     } finally {
@@ -147,7 +147,7 @@ class _ScanScreenState extends State<ScanScreen> {
                   valueListenable: _imagePath,
                   builder: (context, path, _) {
                     if (path == null) {
-                      return const _ScanPlaceholder();
+                      return const ScanPlaceholder();
                     }
                     return ClipRRect(
                       borderRadius: BorderRadius.circular(16),
@@ -157,36 +157,9 @@ class _ScanScreenState extends State<ScanScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _pickImage(ImageSource.camera),
-                      icon: const Icon(Icons.photo_camera_outlined),
-                      label: const Text('Camera'),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _pickImage(ImageSource.gallery),
-                      icon: const Icon(Icons.photo_library_outlined),
-                      label: const Text('Gallery'),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              ImageSourceButtons(
+                onCamera: () => _pickImage(ImageSource.camera),
+                onGallery: () => _pickImage(ImageSource.gallery),
               ),
               const SizedBox(height: 12),
               ListenableBuilder(
@@ -200,51 +173,6 @@ class _ScanScreenState extends State<ScanScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ScanPlaceholder extends StatelessWidget {
-  const _ScanPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.lightSurfaceVariant,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.lightBorder),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.receipt_long_outlined,
-              size: 72,
-              color: AppColors.brandBlue.withValues(alpha: 0.35),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Snap or pick a photo of the bill',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.lightTextPrimary,
-              ),
-            ),
-            const SizedBox(height: 6),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 32),
-              child: Text(
-                'Keep the bill flat and well lit for the best results.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.lightTextSecondary),
-              ),
-            ),
-          ],
         ),
       ),
     );
