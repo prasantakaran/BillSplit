@@ -11,20 +11,9 @@ class ParsedBill {
   final List<BillItem> items;
   final double taxAmount;
 
-  /// The bill's own printed grand total, when a total line was recognised.
-  /// Useful as a sanity check against the computed subtotal + tax.
   final double? detectedTotal;
 }
 
-/// Turns raw OCR text into bill items, tax and total.
-///
-/// Pure Dart — no Flutter or Firebase imports — so it is fully unit-testable
-/// (see test/bill_parser_test.dart). Heuristics, not magic: anything the OCR
-/// or parser gets wrong is fixable on the Edit Items screen.
-///
-/// Understands both simple rows ("Paneer Tikka 250.00") and tabular
-/// Qty/Item/Rate/Amount rows ("2 Masala Dosa 145.00 290.00" -> item
-/// "Masala Dosa" at the line amount 290.00).
 abstract final class BillParser {
   /// A price at the end of a line, optionally prefixed with a currency
   /// marker: "Paneer Tikka 250.00", "Total: Rs. 535.50", "Naan ₹80".
@@ -107,8 +96,9 @@ abstract final class BillParser {
       if (priceMatch == null) {
         continue;
       }
-      final double? price =
-          double.tryParse(priceMatch.group(1)!.replaceAll(',', ''));
+      final double? price = double.tryParse(
+        priceMatch.group(1)!.replaceAll(',', ''),
+      );
       if (price == null || price <= 0 || price > _maxPlausiblePrice) {
         continue;
       }
@@ -148,9 +138,7 @@ abstract final class BillParser {
         continue;
       }
 
-      items.add(
-        BillItem(id: 'item-${items.length}', name: name, price: price),
-      );
+      items.add(BillItem(id: 'item-${items.length}', name: name, price: price));
     }
 
     return ParsedBill(

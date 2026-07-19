@@ -1,12 +1,10 @@
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 /// On-device text recognition for bill photos via Google ML Kit.
-///
-/// The only class that talks to ML Kit. On-device means it is free, fast,
-/// works offline, and bill photos never leave the phone.
 class OcrService {
-  final TextRecognizer _recognizer =
-      TextRecognizer(script: TextRecognitionScript.latin);
+  final TextRecognizer _recognizer = TextRecognizer(
+    script: TextRecognitionScript.latin,
+  );
 
   /// Runs OCR on the image at [imagePath] and returns text reassembled into
   /// visual rows, ready for BillParser.
@@ -38,7 +36,8 @@ class OcrService {
       final double centerY = line.boundingBox.center.dy;
       if (rows.isNotEmpty) {
         final List<TextLine> currentRow = rows.last;
-        final double rowCenterY = currentRow
+        final double rowCenterY =
+            currentRow
                 .map((l) => l.boundingBox.center.dy)
                 .reduce((a, b) => a + b) /
             currentRow.length;

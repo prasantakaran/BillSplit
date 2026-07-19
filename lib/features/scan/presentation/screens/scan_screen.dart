@@ -28,6 +28,40 @@ class _ScanScreenState extends State<ScanScreen> {
   final ValueNotifier<bool> _isProcessing = ValueNotifier<bool>(false);
 
   @override
+  void initState() {
+    super.initState();
+    _recoverLostImage();
+  }
+
+  /// Android may destroy the Flutter activity while the system camera is open.
+  /// image_picker stores that pending result so it can be recovered when this
+  /// screen is created again.
+  Future<void> _recoverLostImage() async {
+    try {
+      final LostDataResponse response = await _picker.retrieveLostData();
+      if (!mounted || response.isEmpty) {
+        return;
+      }
+
+      final List<XFile>? files = response.files;
+      if (files != null && files.isNotEmpty) {
+        _imagePath.value = files.first.path;
+        _showMessage('Camera image recovered.');
+        return;
+      }
+
+      final Exception? exception = response.exception;
+      if (exception != null) {
+        _showMessage('Could not recover the camera image: $exception');
+      }
+    } on Exception catch (e) {
+      if (mounted) {
+        _showMessage('Could not recover the camera image: $e');
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _imagePath.dispose();
     _isProcessing.dispose();
@@ -46,7 +80,10 @@ class _ScanScreenState extends State<ScanScreen> {
         _imagePath.value = picked.path;
       }
     } on Exception catch (e) {
-      _showMessage('Could not open ${source == ImageSource.camera ? 'camera' : 'gallery'}: $e');
+      _showMessage(
+        'Could not open '
+        '${source == ImageSource.camera ? 'camera' : 'gallery'}: $e',
+      );
     }
   }
 

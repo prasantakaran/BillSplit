@@ -11,16 +11,6 @@ import '../../../../shared/widgets/app_logo.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../data/services/auth_service.dart';
 
-/// Sign-in screen shown to unauthenticated users.
-///
-/// Supports email/password sign-in or registration (with password
-/// confirmation), password reset, and Google Sign-In — all backed by
-/// [AuthService]. On success the auth `StreamProvider` makes [AuthGate] swap
-/// to the home screen, so no manual navigation happens here.
-///
-/// Local UI state (obscure toggles, mode, submitting) lives in
-/// [ValueNotifier]s so only the widgets that depend on each piece of state
-/// rebuild — no `setState` over the whole form.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -148,8 +138,9 @@ class _LoginScreenState extends State<LoginScreen> {
           hint: 'Password',
           prefixIcon: Icons.lock_outline,
           obscureText: _obscurePassword.value,
-          textInputAction:
-              isRegistering ? TextInputAction.next : TextInputAction.done,
+          textInputAction: isRegistering
+              ? TextInputAction.next
+              : TextInputAction.done,
           autofillHints: const [AutofillHints.password],
           onFieldSubmitted: isRegistering ? null : (_) => _submitEmailForm(),
           suffixIcon: _buildObscureToggle(_obscurePassword),
@@ -163,9 +154,11 @@ class _LoginScreenState extends State<LoginScreen> {
   /// sign-in mode.
   Widget _buildModeSection() {
     return ListenableBuilder(
-      listenable: Listenable.merge(
-        [_isRegistering, _obscureConfirmPassword, _isSubmitting],
-      ),
+      listenable: Listenable.merge([
+        _isRegistering,
+        _obscureConfirmPassword,
+        _isSubmitting,
+      ]),
       builder: (context, _) {
         if (_isRegistering.value) {
           return Column(
@@ -180,10 +173,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 textInputAction: TextInputAction.done,
                 onFieldSubmitted: (_) => _submitEmailForm(),
                 suffixIcon: _buildObscureToggle(_obscureConfirmPassword),
-                validator: (value) => Validators.confirmPassword(
-                  value,
-                  _passwordController.text,
-                ),
+                validator: (value) =>
+                    Validators.confirmPassword(value, _passwordController.text),
               ),
             ],
           );
@@ -194,8 +185,9 @@ class _LoginScreenState extends State<LoginScreen> {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed:
-                    _isSubmitting.value ? null : _onForgotPasswordPressed,
+                onPressed: _isSubmitting.value
+                    ? null
+                    : _onForgotPasswordPressed,
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
@@ -282,10 +274,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CustomPaint(
-                size: Size(22, 22),
-                painter: _GoogleGPainter(),
-              ),
+              const CustomPaint(size: Size(22, 22), painter: _GoogleGPainter()),
               const SizedBox(width: 12),
               Text(
                 'Continue with Google',

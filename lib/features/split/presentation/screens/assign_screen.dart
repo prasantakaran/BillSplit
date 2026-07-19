@@ -112,6 +112,7 @@ class _AssignScreenState extends State<AssignScreen> {
                     itemBuilder: (context, index) => _AssignItemCard(
                       item: flow.items[index],
                       friends: friends,
+                      onAddFriend: _addFriend,
                     ),
                   ),
                 ),
@@ -154,10 +155,15 @@ class _AssignScreenState extends State<AssignScreen> {
 
 /// One bill item with a chip per friend.
 class _AssignItemCard extends StatelessWidget {
-  const _AssignItemCard({required this.item, required this.friends});
+  const _AssignItemCard({
+    required this.item,
+    required this.friends,
+    required this.onAddFriend,
+  });
 
   final BillItem item;
   final List<Friend> friends;
+  final VoidCallback onAddFriend;
 
   @override
   Widget build(BuildContext context) {
@@ -234,6 +240,21 @@ class _AssignItemCard extends StatelessWidget {
                   side: const BorderSide(color: AppColors.lightBorder),
                   backgroundColor: AppColors.lightSurface,
                 ),
+              ActionChip(
+                avatar: const Icon(
+                  Icons.person_add_alt_1,
+                  size: 18,
+                  color: AppColors.brandBlue,
+                ),
+                label: const Text('Add friend'),
+                labelStyle: const TextStyle(
+                  color: AppColors.brandBlue,
+                  fontWeight: FontWeight.w600,
+                ),
+                side: const BorderSide(color: AppColors.lightBorder),
+                backgroundColor: AppColors.lightSurface,
+                onPressed: onAddFriend,
+              ),
             ],
           ),
         ],
