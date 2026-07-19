@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/showcase_keys.dart';
+import '../../../../shared/widgets/show_case_widget.dart';
 
 /// Bottom navigation between the dashboard and bill history, styled to
 /// match the navy [AppTopBar].
@@ -23,15 +25,31 @@ class HomeNavBar extends StatelessWidget {
       selectedItemColor: Colors.white,
       unselectedItemColor: Colors.white60,
       type: BottomNavigationBarType.fixed,
-      items: const [
+      items: [
         BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
+          icon: AppShowcase(
+            showcaseKey: ShowcaseKeys.navHome,
+            group: ShowcaseKeys.homeGroup,
+            title: 'Dashboard',
+            description: 'Your home base — scan bills and manage friends '
+                'from here.',
+            icon: Icons.home_outlined,
+            child: const Icon(Icons.home_outlined),
+          ),
+          activeIcon: const Icon(Icons.home),
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.history_outlined),
-          activeIcon: Icon(Icons.history),
+          icon: AppShowcase(
+            showcaseKey: ShowcaseKeys.navHistory,
+            group: ShowcaseKeys.homeGroup,
+            title: 'Bill History',
+            description: 'Every bill you\'ve split before, all in one '
+                'place.',
+            icon: Icons.history_outlined,
+            child: const Icon(Icons.history_outlined),
+          ),
+          activeIcon: const Icon(Icons.history),
           label: 'History',
         ),
       ],

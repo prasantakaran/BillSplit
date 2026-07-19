@@ -1,13 +1,4 @@
-/// Builds UPI deep links (`upi://pay?...`) that open any UPI app with the
-/// payee, amount and note prefilled.
-///
-/// Pure Dart — no Flutter imports — fully unit-testable
-/// (see test/upi_link_builder_test.dart).
 abstract final class UpiLinkBuilder {
-  /// Creates a payment link asking for [amount] to be paid to [payeeUpiId].
-  ///
-  /// [payeeName] is shown by the UPI app; [note] appears as the transaction
-  /// remark. Query values are percent-encoded by [Uri].
   static String build({
     required String payeeUpiId,
     required String payeeName,

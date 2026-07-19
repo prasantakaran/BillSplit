@@ -9,9 +9,12 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/models/bill.dart';
 import '../../../../core/models/settlement.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/app_showcase_display_service.dart';
+import '../../../../core/utils/showcase_keys.dart';
 import '../../../../core/utils/validation.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
+import '../../../../shared/widgets/show_case_widget.dart';
 import '../../../history/data/repositories/bills_repository.dart';
 import '../providers/bill_flow_state.dart';
 import '../widgets/bill_total_row.dart';
@@ -45,6 +48,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
       uid: _user.uid,
     );
     _restaurantController.text = context.read<BillFlowState>().restaurantName;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppShowcaseService.startIfUnseen(ShowcaseKeys.resultsScreenId);
+    });
   }
 
   @override
@@ -93,6 +99,28 @@ class _ResultsScreenState extends State<ResultsScreen> {
       billName: _billName,
       payeeName: _payeeName,
       payeeUpiId: _myUpiId,
+    );
+  }
+
+  Widget _buildSettlementCard(int index) {
+    final Settlement s = widget.settlements[index];
+    final Widget card = SettlementCard(
+      settlement: s,
+      onShare: () => _shareRequest(s),
+      onPreviewLink: () => _previewUpiLink(s),
+      onShowQr: () => _showQrCode(s),
+    );
+    if (index != 0) {
+      return card;
+    }
+    return AppShowcase(
+      showcaseKey: ShowcaseKeys.resultsShareButton,
+      group: ShowcaseKeys.resultsGroup,
+      title: 'Collect Payment',
+      description: 'Share a payment request, open it in a UPI app, or show '
+          'a QR code.',
+      icon: Icons.share_outlined,
+      child: card,
     );
   }
 
@@ -181,13 +209,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     validator: Validators.upiId,
                   ),
                   const SizedBox(height: 20),
-                  for (final Settlement s in widget.settlements)
-                    SettlementCard(
-                      settlement: s,
-                      onShare: () => _shareRequest(s),
-                      onPreviewLink: () => _previewUpiLink(s),
-                      onShowQr: () => _showQrCode(s),
-                    ),
+                  for (int i = 0; i < widget.settlements.length; i++)
+                    _buildSettlementCard(i),
                   const SizedBox(height: 6),
                   BillTotalRow(total: flow.grandTotal),
                 ],

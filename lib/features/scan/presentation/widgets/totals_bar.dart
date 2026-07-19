@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/showcase_keys.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/show_case_widget.dart';
 import '../../../split/presentation/providers/bill_flow_state.dart';
 
 // This is Sticky footer for displaying bill totals.
@@ -29,10 +31,18 @@ class TotalsBar extends StatelessWidget {
           const SizedBox(height: 6),
           _totalLine('Total', flow.grandTotal, emphasized: true),
           const SizedBox(height: 14),
-          AppButton(
-            label: 'Continue',
-            trailingIcon: Icons.arrow_forward,
-            onPressed: flow.hasItems ? onContinue : null,
+          AppShowcase(
+            showcaseKey: ShowcaseKeys.editContinueButton,
+            group: ShowcaseKeys.editItemsGroup,
+            title: 'Continue',
+            description: 'Happy with the items and totals? Continue to '
+                'assign them to your friends.',
+            icon: Icons.arrow_forward,
+            child: AppButton(
+              label: 'Continue',
+              trailingIcon: Icons.arrow_forward,
+              onPressed: flow.hasItems ? onContinue : null,
+            ),
           ),
         ],
       ),

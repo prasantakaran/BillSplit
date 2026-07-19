@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/showcase_keys.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/show_case_widget.dart';
 
 class AssignFooter extends StatelessWidget {
   const AssignFooter({
@@ -34,10 +36,18 @@ class AssignFooter extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          AppButton(
-            label: 'Calculate Split',
-            trailingIcon: Icons.arrow_forward,
-            onPressed: onCalculate,
+          AppShowcase(
+            showcaseKey: ShowcaseKeys.assignCalculateButton,
+            group: ShowcaseKeys.assignGroup,
+            title: 'Calculate Split',
+            description: 'Once every item is assigned, tap here to see who '
+                'owes what.',
+            icon: Icons.calculate_outlined,
+            child: AppButton(
+              label: 'Calculate Split',
+              trailingIcon: Icons.arrow_forward,
+              onPressed: onCalculate,
+            ),
           ),
         ],
       ),

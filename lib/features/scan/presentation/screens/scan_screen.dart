@@ -6,8 +6,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/app_showcase_display_service.dart';
+import '../../../../core/utils/showcase_keys.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
+import '../../../../shared/widgets/show_case_widget.dart';
 import '../../../split/presentation/providers/bill_flow_state.dart';
 import '../../data/services/ocr_service.dart';
 import '../../domain/bill_parser.dart';
@@ -41,6 +44,9 @@ class _ScanScreenState extends State<ScanScreen> {
     } else {
       _recoverLostImage();
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppShowcaseService.startIfUnseen(ShowcaseKeys.scanScreenId);
+    });
   }
 
   /// Android may destroy the Flutter activity while the system camera is open.
@@ -236,18 +242,34 @@ class _ScanScreenState extends State<ScanScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              ImageSourceButtons(
-                onCamera: () => _pickImage(ImageSource.camera),
-                onGallery: () => _pickImage(ImageSource.gallery),
+              AppShowcase(
+                showcaseKey: ShowcaseKeys.scanSourceButtons,
+                group: ShowcaseKeys.scanGroup,
+                title: 'Pick a Photo',
+                description: 'Take a new photo or choose one from your '
+                    'gallery to get started.',
+                icon: Icons.add_a_photo_outlined,
+                child: ImageSourceButtons(
+                  onCamera: () => _pickImage(ImageSource.camera),
+                  onGallery: () => _pickImage(ImageSource.gallery),
+                ),
               ),
               const SizedBox(height: 12),
               ListenableBuilder(
                 listenable: Listenable.merge([_imagePath, _isProcessing]),
-                builder: (context, _) => AppButton(
-                  label: 'Detect Items',
+                builder: (context, _) => AppShowcase(
+                  showcaseKey: ShowcaseKeys.scanDetectButton,
+                  group: ShowcaseKeys.scanGroup,
+                  title: 'Detect Items',
+                  description: 'Once you\'ve picked and cropped a photo, '
+                      'tap here to read the items automatically.',
                   icon: Icons.document_scanner_outlined,
-                  isLoading: _isProcessing.value,
-                  onPressed: _imagePath.value == null ? null : _detectItems,
+                  child: AppButton(
+                    label: 'Detect Items',
+                    icon: Icons.document_scanner_outlined,
+                    isLoading: _isProcessing.value,
+                    onPressed: _imagePath.value == null ? null : _detectItems,
+                  ),
                 ),
               ),
             ],

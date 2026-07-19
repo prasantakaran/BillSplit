@@ -6,7 +6,10 @@ import 'package:provider/provider.dart';
 import '../../../../core/models/friend.dart';
 import '../../../../core/models/settlement.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/app_showcase_display_service.dart';
+import '../../../../core/utils/showcase_keys.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
+import '../../../../shared/widgets/show_case_widget.dart';
 import '../../../friends/data/repositories/friends_repository.dart';
 import '../../../friends/presentation/widgets/add_friend_dialog.dart';
 import '../../domain/settlement_calculator.dart';
@@ -26,6 +29,10 @@ class AssignScreen extends StatefulWidget {
 class _AssignScreenState extends State<AssignScreen> {
   late final FriendsRepository _repository;
   late final Stream<List<Friend>> _friendsStream;
+
+  /// Set once the showcase tour has been kicked off, so it isn't restarted
+  /// on every stream rebuild while items are still unassigned.
+  bool _showcaseTriggered = false;
 
   @override
   void initState() {
@@ -91,6 +98,13 @@ class _AssignScreenState extends State<AssignScreen> {
                 .where((item) => item.isAssigned)
                 .length;
 
+            if (!_showcaseTriggered && flow.items.isNotEmpty) {
+              _showcaseTriggered = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                AppShowcaseService.startIfUnseen(ShowcaseKeys.assignScreenId);
+              });
+            }
+
             return Column(
               children: [
                 const Padding(
@@ -105,11 +119,25 @@ class _AssignScreenState extends State<AssignScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
                     itemCount: flow.items.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) => AssignItemCard(
-                      item: flow.items[index],
-                      friends: friends,
-                      onAddFriend: _addFriend,
-                    ),
+                    itemBuilder: (context, index) {
+                      final Widget card = AssignItemCard(
+                        item: flow.items[index],
+                        friends: friends,
+                        onAddFriend: _addFriend,
+                      );
+                      if (index != 0) {
+                        return card;
+                      }
+                      return AppShowcase(
+                        showcaseKey: ShowcaseKeys.assignFirstItemCard,
+                        group: ShowcaseKeys.assignGroup,
+                        title: 'Assign Items',
+                        description: 'Tap each friend\'s name to mark who '
+                            'shared this item.',
+                        icon: Icons.checklist_rtl,
+                        child: card,
+                      );
+                    },
                   ),
                 ),
                 AssignFooter(

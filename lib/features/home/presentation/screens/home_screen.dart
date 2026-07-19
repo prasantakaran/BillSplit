@@ -6,7 +6,10 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/models/friend.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/app_showcase_display_service.dart';
+import '../../../../core/utils/showcase_keys.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
+import '../../../../shared/widgets/show_case_widget.dart';
 import '../../../auth/data/services/auth_service.dart';
 import '../../../friends/data/repositories/friends_repository.dart';
 import '../../../friends/presentation/screens/friends_screen.dart';
@@ -34,6 +37,10 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 0 = dashboard, 1 = bill history.
   final ValueNotifier<int> _tabIndex = ValueNotifier<int>(0);
 
+  /// Set when [_resumeLostScan] navigates away to a recovered scan, so the
+  /// dashboard showcase doesn't start underneath the pushed screen.
+  bool _navigatedAway = false;
+
   @override
   void initState() {
     super.initState();
@@ -43,7 +50,12 @@ class _HomeScreenState extends State<HomeScreen> {
       uid: user.uid,
     );
     _friendsStream = _repository.watchFriends();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _resumeLostScan());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _resumeLostScan();
+      if (mounted && !_navigatedAway) {
+        AppShowcaseService.startIfUnseen(ShowcaseKeys.homeScreenId);
+      }
+    });
   }
 
   @override
@@ -73,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
             content: Text('Recovered your bill photo — continuing the scan.'),
           ),
         );
+      _navigatedAway = true;
       _push(ScanScreen(initialImagePath: files.first.path));
     } on Exception {
       // Nothing to resume; stay on the dashboard.
@@ -146,12 +159,20 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _addFriend,
-        backgroundColor: AppColors.brandBlue,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.person_add_alt_1),
-        label: const Text('Add Friend'),
+      floatingActionButton: AppShowcase(
+        showcaseKey: ShowcaseKeys.homeAddFriendFab,
+        group: ShowcaseKeys.homeGroup,
+        title: 'Add Friends',
+        description: 'Add the people you split bills with — you\'ll pick '
+            'from this list when assigning items.',
+        icon: Icons.person_add_alt_1,
+        child: FloatingActionButton.extended(
+          onPressed: _addFriend,
+          backgroundColor: AppColors.brandBlue,
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.person_add_alt_1),
+          label: const Text('Add Friend'),
+        ),
       ),
       body: SafeArea(
         child: Column(

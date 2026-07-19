@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/showcase_keys.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/show_case_widget.dart';
 import 'scan_bill_card.dart';
 
 class HomeHeader extends StatelessWidget {
@@ -43,7 +45,15 @@ class HomeHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          ScanBillCard(onTap: onScanTap),
+          AppShowcase(
+            showcaseKey: ShowcaseKeys.homeScanCard,
+            group: ShowcaseKeys.homeGroup,
+            title: 'Scan a Bill',
+            description: 'Snap or upload a receipt — BillSplit reads the '
+                'items for you automatically.',
+            icon: Icons.document_scanner_outlined,
+            child: ScanBillCard(onTap: onScanTap),
+          ),
           const SizedBox(height: 16),
           AppTextField(
             hint: 'Search friends',
