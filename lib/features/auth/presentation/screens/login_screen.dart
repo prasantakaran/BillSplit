@@ -59,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       // Success: AuthGate reacts to the auth state stream and shows home.
     } on AuthException catch (e) {
-      _showMessage(e.message);
+      _showMessage(e.message, color: AppColors.negativeAmount);
     } finally {
       if (mounted) {
         _isSubmitting.value = false;
@@ -71,7 +71,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final String email = _emailController.text.trim();
     final String? emailError = Validators.email(email);
     if (emailError != null) {
-      _showMessage('$emailError to reset your password.');
+      _showMessage(
+        '$emailError to reset your password.',
+        color: AppColors.negativeAmount,
+      );
       return;
     }
 
@@ -79,9 +82,12 @@ class _LoginScreenState extends State<LoginScreen> {
     _isSubmitting.value = true;
     try {
       await authService.sendPasswordResetEmail(email);
-      _showMessage('Password reset email sent to $email.');
+      _showMessage(
+        'Password reset email sent to $email.',
+        color: AppColors.positiveAmount,
+      );
     } on AuthException catch (e) {
-      _showMessage(e.message);
+      _showMessage(e.message, color: AppColors.negativeAmount);
     } finally {
       if (mounted) {
         _isSubmitting.value = false;
@@ -96,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // Returns false when the user dismisses the account picker — no error.
       await authService.signInWithGoogle();
     } on AuthException catch (e) {
-      _showMessage(e.message);
+      _showMessage(e.message, color: AppColors.negativeAmount);
     } finally {
       if (mounted) {
         _isSubmitting.value = false;
@@ -104,13 +110,13 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _showMessage(String message) {
+  void _showMessage(String message, {required Color color}) {
     if (!mounted) {
       return;
     }
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(SnackBar(content: Text(message), backgroundColor: color));
   }
 
   @override

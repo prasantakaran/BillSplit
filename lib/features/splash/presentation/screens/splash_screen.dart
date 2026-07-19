@@ -97,7 +97,7 @@ class _SplashScreenState extends State<SplashScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(AppImagesConst.splashScreen, fit: BoxFit.cover),
+          Image.asset(AppImagesConst.splashScreen, fit: BoxFit.fill),
           SafeArea(
             child: Column(
               children: [

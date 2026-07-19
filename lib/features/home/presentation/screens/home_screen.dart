@@ -16,6 +16,7 @@ import '../../../scan/presentation/screens/scan_screen.dart';
 import '../widgets/filtered_friends_list.dart';
 import '../widgets/home_header.dart';
 import '../widgets/home_nav_bar.dart';
+import '../widgets/logout_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -31,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final ValueNotifier<String> _searchQuery = ValueNotifier<String>('');
 
   /// 0 = dashboard, 1 = bill history.
-  int _tabIndex = 0;
+  final ValueNotifier<int> _tabIndex = ValueNotifier<int>(0);
 
   @override
   void initState() {
@@ -48,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _searchQuery.dispose();
+    _tabIndex.dispose();
     super.dispose();
   }
 
@@ -103,22 +105,33 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
   }
 
+  Future<void> _confirmLogout() async {
+    final bool confirmed = await LogoutDialog.show(context);
+    if (!confirmed || !mounted) {
+      return;
+    }
+    await context.read<AuthService>().signOut();
+  }
+
   @override
   Widget build(BuildContext context) {
     final User? user = context.watch<User?>();
 
-    return Scaffold(
-      backgroundColor: AppColors.lightBackground,
-      body: IndexedStack(
-        index: _tabIndex,
-        children: [
-          _buildDashboard(user),
-          const HistoryScreen(),
-        ],
-      ),
-      bottomNavigationBar: HomeNavBar(
-        currentIndex: _tabIndex,
-        onTap: (index) => setState(() => _tabIndex = index),
+    return ValueListenableBuilder<int>(
+      valueListenable: _tabIndex,
+      builder: (context, tabIndex, _) => Scaffold(
+        backgroundColor: AppColors.lightBackground,
+        body: IndexedStack(
+          index: tabIndex,
+          children: [
+            _buildDashboard(user),
+            const HistoryScreen(),
+          ],
+        ),
+        bottomNavigationBar: HomeNavBar(
+          currentIndex: tabIndex,
+          onTap: (index) => _tabIndex.value = index,
+        ),
       ),
     );
   }
@@ -133,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             tooltip: 'Sign out',
             icon: const Icon(Icons.logout),
-            onPressed: () => context.read<AuthService>().signOut(),
+            onPressed: _confirmLogout,
           ),
         ],
       ),
