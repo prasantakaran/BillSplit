@@ -21,6 +21,7 @@ import '../providers/bill_flow_state.dart';
 import '../widgets/bill_total_row.dart';
 import '../widgets/save_bill_bar.dart';
 import '../widgets/settlement_card.dart';
+import '../widgets/upi_qr_sheet.dart';
 
 class ResultsScreen extends StatefulWidget {
   const ResultsScreen({super.key, required this.settlements});
@@ -99,6 +100,32 @@ class _ResultsScreenState extends State<ResultsScreen> {
     if (!launched) {
       _showMessage('No UPI app found on this device.');
     }
+  }
+
+  void _showQrCode(Settlement s) {
+    final String? upi = _myUpiId;
+    if (upi == null) {
+      _showMessage('Enter your UPI ID above to build payment links.');
+      return;
+    }
+    final String uri = UpiLinkBuilder.build(
+      payeeUpiId: upi,
+      payeeName: _user.displayName ?? 'BillSplit user',
+      amount: s.totalOwed,
+      note: 'BillSplit: $_billName',
+    );
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.lightBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => UpiQrSheet(
+        settlement: s,
+        upiUri: uri,
+        payeeUpiId: upi,
+      ),
+    );
   }
 
   Future<void> _saveBill() async {
@@ -191,6 +218,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       settlement: s,
                       onShare: () => _shareRequest(s),
                       onPreviewLink: () => _previewUpiLink(s),
+                      onShowQr: () => _showQrCode(s),
                     ),
                   const SizedBox(height: 6),
                   BillTotalRow(total: flow.grandTotal),

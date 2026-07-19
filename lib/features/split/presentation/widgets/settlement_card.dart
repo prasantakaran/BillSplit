@@ -10,11 +10,13 @@ class SettlementCard extends StatelessWidget {
     required this.settlement,
     required this.onShare,
     required this.onPreviewLink,
+    required this.onShowQr,
   });
 
   final Settlement settlement;
   final VoidCallback onShare;
   final VoidCallback onPreviewLink;
+  final VoidCallback onShowQr;
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +74,11 @@ class SettlementCard extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          IconButton(
+            tooltip: 'Show payment QR',
+            icon: const Icon(Icons.qr_code_2, color: AppColors.brandNavy),
+            onPressed: onShowQr,
           ),
           IconButton(
             tooltip: 'Open in UPI app',
