@@ -32,6 +32,55 @@ Thank You! Visit Again
       expect(parsed.detectedTotal, 535.50);
     });
 
+    test(
+      'corrects ₹-misread-as-7 digits using price × qty = total columns '
+      '(Sunrise Foods receipt)',
+      () {
+        // Real OCR output shape: "₹998" read as "7998", "₹80" as "780",
+        // plus a stray "T" fragment inside one row's columns.
+        const rawText = '''
+Sunrise Foods Pvt Ltd
+9 Palm Court, Delhi, Gujarat 856604
+Name: Pooja Iyer Invoice No: INV-2026-0423
+Table: #02 Date: 12/02/2026
+Item Price Qty Total
+Masala Dosa 7499 4 1996
+Masala Dosa 7499 2 7998
+Paneer Butter Masala 399 2 798
+Paneer Butter Masala 799 6 7594
+Cold Coffee 780 T 6 480
+Masala Dosa 780 4 7320
+Sub-Total: 5,186.00
+CGST: SGST: 2.5% 129.65
+SGST: SGST: 2.5% 129.65
+Mode: card Total: 5,445.30
+GSTIN: 30XICTI5508S8Z5
+THANK YOU. VISIT AGAIN.
+''';
+
+        final ParsedBill parsed = BillParser.parse(rawText);
+
+        expect(parsed.items.map((item) => item.name).toList(), [
+          'Masala Dosa',
+          'Masala Dosa',
+          'Paneer Butter Masala',
+          'Paneer Butter Masala',
+          'Cold Coffee',
+          'Masala Dosa',
+        ]);
+        expect(parsed.items.map((item) => item.price).toList(), [
+          1996,
+          998,
+          798,
+          594,
+          480,
+          320,
+        ]);
+        expect(parsed.taxAmount, closeTo(259.30, 0.001));
+        expect(parsed.detectedTotal, 5445.30);
+      },
+    );
+
     test('handles currency prefixes and dot leaders', () {
       const rawText = '''
 Masala Dosa ....... Rs. 120.00
