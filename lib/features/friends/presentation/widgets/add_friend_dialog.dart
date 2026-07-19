@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/models/friend.dart';
@@ -117,6 +118,10 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
                     hint: 'Mobile number (optional)',
                     prefixIcon: Icons.phone_outlined,
                     keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _submit(),
                     validator: Validators.optionalMobile,

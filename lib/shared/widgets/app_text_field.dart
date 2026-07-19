@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/theme/app_colors.dart';
 
@@ -13,6 +14,7 @@ class AppTextField extends StatelessWidget {
     this.keyboardType,
     this.textInputAction,
     this.autofillHints,
+    this.inputFormatters,
     this.validator,
     this.onFieldSubmitted,
     this.onChanged,
@@ -26,6 +28,7 @@ class AppTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
   final Iterable<String>? autofillHints;
+  final List<TextInputFormatter>? inputFormatters;
   final String? Function(String?)? validator;
   final ValueChanged<String>? onFieldSubmitted;
   final ValueChanged<String>? onChanged;
@@ -45,6 +48,8 @@ class AppTextField extends StatelessWidget {
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       autofillHints: autofillHints,
+      inputFormatters: inputFormatters,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       validator: validator,
       onFieldSubmitted: onFieldSubmitted,
       onChanged: onChanged,

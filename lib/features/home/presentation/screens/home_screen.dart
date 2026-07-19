@@ -58,8 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// photo taken before the kill, jump straight back into the scan flow.
   Future<void> _resumeLostScan() async {
     try {
-      final LostDataResponse response =
-          await ImagePicker().retrieveLostData();
+      final LostDataResponse response = await ImagePicker().retrieveLostData();
       if (!mounted || response.isEmpty) {
         return;
       }
@@ -123,10 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: AppColors.lightBackground,
         body: IndexedStack(
           index: tabIndex,
-          children: [
-            _buildDashboard(user),
-            const HistoryScreen(),
-          ],
+          children: [_buildDashboard(user), const HistoryScreen()],
         ),
         bottomNavigationBar: HomeNavBar(
           currentIndex: tabIndex,

@@ -30,7 +30,10 @@ class HomeHeader extends StatelessWidget {
             style: TextStyle(fontSize: 15, color: AppColors.lightTextSecondary),
           ),
           Text(
-            welcomeName,
+            welcomeName.isNotEmpty
+                ? welcomeName[0].toUpperCase() +
+                      welcomeName.substring(1).toLowerCase()
+                : '',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
