@@ -68,6 +68,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            isMinifyEnabled = true // Removes unused code
+            isShrinkResources = true // Removes unused resources
         }
     }
 }
