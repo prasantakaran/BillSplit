@@ -22,10 +22,6 @@ abstract final class AppColors {
   /// Non-blocking warnings, e.g. items not matching the printed subtotal.
   static const Color warning = Color(0xFFB45309);
 
-  // ---------------------------------------------------------------------
-  // Light theme surface & text colours.
-  // ---------------------------------------------------------------------
-
   static const Color lightBackground = Color(0xFFFAFAFD);
   static const Color lightSurface = Color(0xFFFFFFFF);
   static const Color lightSurfaceVariant = Color(0xFFF1F5F9);

@@ -1,13 +1,22 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/models/bill.dart';
 import '../../../../core/models/bill_item.dart';
 import '../../../../core/models/settlement.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/validation.dart';
+import '../../../../shared/widgets/app_text_field.dart';
+import '../../../split/presentation/widgets/settlement_card.dart';
+import '../../../split/presentation/widgets/settlement_payment_actions.dart';
 
-class BillDetailSheet extends StatelessWidget {
+/// Bottom-sheet detail view of a saved bill: items, tax/total and
+/// per-person shares, with the same share / UPI / QR payment-request
+/// actions as the results screen.
+class BillDetailSheet extends StatefulWidget {
   const BillDetailSheet({
     super.key,
     required this.bill,
@@ -18,7 +27,30 @@ class BillDetailSheet extends StatelessWidget {
   final DateFormat dateFormat;
 
   @override
+  State<BillDetailSheet> createState() => _BillDetailSheetState();
+}
+
+class _BillDetailSheetState extends State<BillDetailSheet> {
+  final TextEditingController _upiController = TextEditingController();
+
+  @override
+  void dispose() {
+    _upiController.dispose();
+    super.dispose();
+  }
+
+  String? get _myUpiId {
+    final String upi = _upiController.text.trim();
+    return upi.isEmpty || Validators.upiId(upi) != null ? null : upi;
+  }
+
+  String get _payeeName =>
+      context.read<User?>()?.displayName ?? 'BillSplit user';
+
+  @override
   Widget build(BuildContext context) {
+    final Bill bill = widget.bill;
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
@@ -40,7 +72,7 @@ class BillDetailSheet extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                dateFormat.format(bill.createdAt),
+                widget.dateFormat.format(bill.createdAt),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 12.5,
@@ -79,6 +111,14 @@ class BillDetailSheet extends StatelessWidget {
                 emphasized: true,
               ),
               const SizedBox(height: 16),
+              AppTextField(
+                controller: _upiController,
+                hint: 'Your UPI ID — to request payments',
+                prefixIcon: Icons.currency_rupee,
+                textInputAction: TextInputAction.done,
+                validator: Validators.upiId,
+              ),
+              const SizedBox(height: 16),
               const Text(
                 'Who owed what',
                 style: TextStyle(
@@ -88,26 +128,27 @@ class BillDetailSheet extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               for (final Settlement s in bill.settlements)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          s.friendName,
-                          style: const TextStyle(
-                            color: AppColors.lightTextPrimary,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        CurrencyFormatter.format(s.totalOwed),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.brandNavy,
-                        ),
-                      ),
-                    ],
+                SettlementCard(
+                  settlement: s,
+                  onShare: () => SettlementPaymentActions.shareRequest(
+                    settlement: s,
+                    billName: bill.restaurantName,
+                    payeeName: _payeeName,
+                    payeeUpiId: _myUpiId,
+                  ),
+                  onPreviewLink: () => SettlementPaymentActions.openUpiApp(
+                    context,
+                    settlement: s,
+                    billName: bill.restaurantName,
+                    payeeName: _payeeName,
+                    payeeUpiId: _myUpiId,
+                  ),
+                  onShowQr: () => SettlementPaymentActions.showQr(
+                    context,
+                    settlement: s,
+                    billName: bill.restaurantName,
+                    payeeName: _payeeName,
+                    payeeUpiId: _myUpiId,
                   ),
                 ),
             ],
@@ -125,10 +166,7 @@ class BillDetailSheet extends StatelessWidget {
     );
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: style),
-        Text(value, style: style),
-      ],
+      children: [Text(label, style: style), Text(value, style: style)],
     );
   }
 }

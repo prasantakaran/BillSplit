@@ -92,8 +92,37 @@ class BillFlowState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setTaxAmount(double amount) {
-    _taxAmount = amount < 0 ? 0 : amount;
+  /// Adds an empty tax/charge line for the user to fill in.
+  void addTaxLine({String label = '', double amount = 0}) {
+    _taxLines = List.of(_taxLines)..add(TaxLine(label: label, amount: amount));
+    _recomputeTaxAmount();
+  }
+
+  void updateTaxLine(int index, {String? label, double? amount}) {
+    if (index < 0 || index >= _taxLines.length) {
+      return;
+    }
+    final TaxLine current = _taxLines[index];
+    final List<TaxLine> lines = List.of(_taxLines);
+    lines[index] = TaxLine(
+      label: label ?? current.label,
+      amount: amount ?? current.amount,
+    );
+    _taxLines = lines;
+    _recomputeTaxAmount();
+  }
+
+  void removeTaxLine(int index) {
+    if (index < 0 || index >= _taxLines.length) {
+      return;
+    }
+    _taxLines = List.of(_taxLines)..removeAt(index);
+    _recomputeTaxAmount();
+  }
+
+  /// The total tax is always the sum of the editable tax lines.
+  void _recomputeTaxAmount() {
+    _taxAmount = _taxLines.fold(0, (sum, tax) => sum + tax.amount);
     notifyListeners();
   }
 

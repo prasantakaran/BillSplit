@@ -15,6 +15,7 @@ import '../../../history/presentation/screens/history_screen.dart';
 import '../../../scan/presentation/screens/scan_screen.dart';
 import '../widgets/filtered_friends_list.dart';
 import '../widgets/home_header.dart';
+import '../widgets/home_nav_bar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,6 +29,9 @@ class _HomeScreenState extends State<HomeScreen> {
   late final Stream<List<Friend>> _friendsStream;
 
   final ValueNotifier<String> _searchQuery = ValueNotifier<String>('');
+
+  /// 0 = dashboard, 1 = bill history.
+  int _tabIndex = 0;
 
   @override
   void initState() {
@@ -105,14 +109,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
+      body: IndexedStack(
+        index: _tabIndex,
+        children: [
+          _buildDashboard(user),
+          const HistoryScreen(),
+        ],
+      ),
+      bottomNavigationBar: HomeNavBar(
+        currentIndex: _tabIndex,
+        onTap: (index) => setState(() => _tabIndex = index),
+      ),
+    );
+  }
+
+  /// The Home tab: greeting, scan card, searchable friends list.
+  Widget _buildDashboard(User? user) {
+    return Scaffold(
+      backgroundColor: AppColors.lightBackground,
       appBar: AppTopBar(
         title: 'BillSplit',
         actions: [
-          IconButton(
-            tooltip: 'Bill history',
-            icon: const Icon(Icons.history),
-            onPressed: () => _push(const HistoryScreen()),
-          ),
           IconButton(
             tooltip: 'Sign out',
             icon: const Icon(Icons.logout),

@@ -5,11 +5,17 @@ import '../../../../core/theme/app_colors.dart';
 
 /// Card row for a single friend: initial avatar, name, UPI/phone subtitle.
 ///
-/// Shows a trailing delete button only when [onDelete] is provided.
+/// Shows trailing edit/delete buttons only when the callbacks are provided.
 class FriendCard extends StatelessWidget {
-  const FriendCard({super.key, required this.friend, this.onDelete});
+  const FriendCard({
+    super.key,
+    required this.friend,
+    this.onEdit,
+    this.onDelete,
+  });
 
   final Friend friend;
+  final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
   @override
@@ -48,15 +54,30 @@ class FriendCard extends StatelessWidget {
                 friend.upiId ?? friend.phone!,
                 style: const TextStyle(color: AppColors.lightTextSecondary),
               ),
-        trailing: onDelete == null
+        trailing: onEdit == null && onDelete == null
             ? null
-            : IconButton(
-                tooltip: 'Remove friend',
-                icon: const Icon(
-                  Icons.delete_outline,
-                  color: AppColors.lightTextSecondary,
-                ),
-                onPressed: onDelete,
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (onEdit != null)
+                    IconButton(
+                      tooltip: 'Edit friend',
+                      icon: const Icon(
+                        Icons.edit_outlined,
+                        color: AppColors.brandBlue,
+                      ),
+                      onPressed: onEdit,
+                    ),
+                  if (onDelete != null)
+                    IconButton(
+                      tooltip: 'Remove friend',
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: AppColors.lightTextSecondary,
+                      ),
+                      onPressed: onDelete,
+                    ),
+                ],
               ),
       ),
     );

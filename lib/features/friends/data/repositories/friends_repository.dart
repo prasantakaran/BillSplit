@@ -26,6 +26,11 @@ class FriendsRepository {
     return _collection.doc(friend.id).set(friend.toMap());
   }
 
+  /// Overwrites the friend document with the edited details.
+  Future<void> updateFriend(Friend friend) {
+    return _collection.doc(friend.id).set(friend.toMap());
+  }
+
   Future<void> deleteFriend(String id) {
     return _collection.doc(id).delete();
   }

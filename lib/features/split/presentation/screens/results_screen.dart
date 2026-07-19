@@ -4,24 +4,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/models/bill.dart';
 import '../../../../core/models/settlement.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/upi_link_builder.dart';
 import '../../../../core/utils/validation.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../history/data/repositories/bills_repository.dart';
-import '../../domain/payment_message_builder.dart';
 import '../providers/bill_flow_state.dart';
 import '../widgets/bill_total_row.dart';
 import '../widgets/save_bill_bar.dart';
 import '../widgets/settlement_card.dart';
-import '../widgets/upi_qr_sheet.dart';
+import '../widgets/settlement_payment_actions.dart';
 
 class ResultsScreen extends StatefulWidget {
   const ResultsScreen({super.key, required this.settlements});
@@ -69,62 +65,34 @@ class _ResultsScreenState extends State<ResultsScreen> {
     return upi.isEmpty || Validators.upiId(upi) != null ? null : upi;
   }
 
-  Future<void> _shareRequest(Settlement s) async {
-    final String message = PaymentMessageBuilder.build(
+  String get _payeeName => _user.displayName ?? 'BillSplit user';
+
+  Future<void> _shareRequest(Settlement s) {
+    return SettlementPaymentActions.shareRequest(
       settlement: s,
       billName: _billName,
-      payeeName: _user.displayName ?? 'BillSplit user',
+      payeeName: _payeeName,
       payeeUpiId: _myUpiId,
     );
-    await SharePlus.instance.share(ShareParams(text: message));
   }
 
-  Future<void> _previewUpiLink(Settlement s) async {
-    final String? upi = _myUpiId;
-    if (upi == null) {
-      _showMessage('Enter your UPI ID above to build payment links.');
-      return;
-    }
-    final Uri link = Uri.parse(
-      UpiLinkBuilder.build(
-        payeeUpiId: upi,
-        payeeName: _user.displayName ?? 'BillSplit user',
-        amount: s.totalOwed,
-        note: 'BillSplit: $_billName',
-      ),
+  Future<void> _previewUpiLink(Settlement s) {
+    return SettlementPaymentActions.openUpiApp(
+      context,
+      settlement: s,
+      billName: _billName,
+      payeeName: _payeeName,
+      payeeUpiId: _myUpiId,
     );
-    final bool launched = await launchUrl(
-      link,
-      mode: LaunchMode.externalApplication,
-    );
-    if (!launched) {
-      _showMessage('No UPI app found on this device.');
-    }
   }
 
   void _showQrCode(Settlement s) {
-    final String? upi = _myUpiId;
-    if (upi == null) {
-      _showMessage('Enter your UPI ID above to build payment links.');
-      return;
-    }
-    final String uri = UpiLinkBuilder.build(
-      payeeUpiId: upi,
-      payeeName: _user.displayName ?? 'BillSplit user',
-      amount: s.totalOwed,
-      note: 'BillSplit: $_billName',
-    );
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: AppColors.lightBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => UpiQrSheet(
-        settlement: s,
-        upiUri: uri,
-        payeeUpiId: upi,
-      ),
+    SettlementPaymentActions.showQr(
+      context,
+      settlement: s,
+      billName: _billName,
+      payeeName: _payeeName,
+      payeeUpiId: _myUpiId,
     );
   }
 

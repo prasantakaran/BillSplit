@@ -8,8 +8,7 @@ import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../split/presentation/providers/bill_flow_state.dart';
 import '../../../split/presentation/screens/assign_screen.dart';
 import '../widgets/item_row.dart';
-import '../widgets/tax_breakdown.dart';
-import '../widgets/tax_field.dart';
+import '../widgets/tax_lines_editor.dart';
 import '../widgets/totals_bar.dart';
 
 class EditItemsScreen extends StatelessWidget {
@@ -76,11 +75,7 @@ class EditItemsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  if (flow.taxLines.isNotEmpty) ...[
-                    TaxBreakdown(taxLines: flow.taxLines),
-                    const SizedBox(height: 12),
-                  ],
-                  TaxField(key: ValueKey('tax-${flow.items.length}')),
+                  TaxLinesEditor(taxLines: flow.taxLines),
                 ],
               ),
             ),
