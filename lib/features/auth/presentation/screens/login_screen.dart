@@ -13,8 +13,6 @@ import '../widgets/google_sign_in_button.dart';
 import '../widgets/or_divider.dart';
 import '../widgets/password_field.dart';
 
-/// Sign-in / registration screen. Owns only the form state and auth
-/// actions; all visual sections live in `../widgets/`.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -148,8 +146,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           ? TextInputAction.next
                           : TextInputAction.done,
                       autofillHints: const [AutofillHints.password],
-                      onFieldSubmitted:
-                          isRegistering ? null : (_) => _submitEmailForm(),
+                      onFieldSubmitted: isRegistering
+                          ? null
+                          : (_) => _submitEmailForm(),
                       validator: Validators.password,
                     ),
                   ),
@@ -163,10 +162,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
                   ListenableBuilder(
-                    listenable: Listenable.merge([_isRegistering, _isSubmitting]),
+                    listenable: Listenable.merge([
+                      _isRegistering,
+                      _isSubmitting,
+                    ]),
                     builder: (context, _) => AppButton(
-                      label:
-                          _isRegistering.value ? 'Create Account' : 'Sign In',
+                      label: _isRegistering.value
+                          ? 'Create Account'
+                          : 'Sign In',
                       trailingIcon: Icons.arrow_forward,
                       isLoading: _isSubmitting.value,
                       onPressed: _submitEmailForm,
