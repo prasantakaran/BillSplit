@@ -135,6 +135,74 @@ GST included as applicable
       },
     );
 
+    test(
+      'parses qty-first rows, glued prices and gross-amount totals '
+      '(Bombay Canteen receipt)',
+      () {
+        const rawText = '''
+Tel :02249666666
+THE BOMBAY CANTEEN
+INDIAN CAFE & BAR
+Facebook /thebombaycanteen
+Twitter /bombay_canteen
+Instagram /thebombaycanteen
+BILL NO :00108989 TABLE :31
+BILL DATE :15/12/2017 COVERS:2
+BILL TIME :14:56 SHIFT :1
+INVOICE# :
+CR.INVOICE#:
+QTY DESCRIPTION AMOUNT
+996331
+2 BIRA WHITE 790.00
+1 MANGO ICE TEA 250.00
+1 MUSHROOM CHILLI FRY 375.00
+1 CHARCOAL GRILLED CALAMAR425.00
+1 MUSTARD CHICKEN 650.00
+1 KHAMIRI NAAN 120.00
+1 COCONUT RICE 120.00
+Sub Total 2730.00
+Service Charge 10% 273.00
+VAT ON LIQUOR @2.5% 43.45
+CGST on Food @2.5% 53.36
+SGST on Food @2.5% 53.36
+Adjustments 0.03
+Gross Amount 3154.00
+For Information only
+GST NO: 27AADCH3020R1ZF
+VAT NO: 279652800D3V
+CHINTU, CHHOTA AND BADA
+SAY THANK YOU AND HOPE
+THAT YOU COME BACK SOON!
+CASHIER :VISHAL
+''';
+
+        final ParsedBill parsed = BillParser.parse(rawText);
+
+        expect(parsed.items.map((item) => item.name).toList(), [
+          'BIRA WHITE',
+          'MANGO ICE TEA',
+          'MUSHROOM CHILLI FRY',
+          'CHARCOAL GRILLED CALAMAR',
+          'MUSTARD CHICKEN',
+          'KHAMIRI NAAN',
+          'COCONUT RICE',
+        ]);
+        expect(parsed.items.map((item) => item.price).toList(), [
+          790.00,
+          250.00,
+          375.00,
+          425.00,
+          650.00,
+          120.00,
+          120.00,
+        ]);
+        // Service charge + VAT + CGST + SGST; "Adjustments" excluded.
+        expect(parsed.taxAmount, closeTo(423.17, 0.001));
+        expect(parsed.detectedSubtotal, 2730.00);
+        expect(parsed.detectedTotal, 3154.00);
+      },
+    );
+
     test('corrects a ₹-misread price on a plain bill via the printed subtotal',
         () {
       const rawText = '''

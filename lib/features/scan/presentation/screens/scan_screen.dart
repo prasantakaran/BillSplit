@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -84,14 +85,54 @@ class _ScanScreenState extends State<ScanScreen> {
         maxWidth: 2000,
         imageQuality: 90,
       );
-      if (picked != null) {
-        _imagePath.value = picked.path;
+      if (picked == null) {
+        return;
       }
+      // Cropping to just the bill removes background clutter, which
+      // noticeably improves OCR accuracy.
+      _imagePath.value = await _cropImage(picked.path) ?? picked.path;
     } on Exception catch (e) {
       _showMessage(
         'Could not open '
         '${source == ImageSource.camera ? 'camera' : 'gallery'}: $e',
       );
+    }
+  }
+
+  /// Opens the crop UI for the picked photo. Returns null when the user
+  /// backs out, in which case the uncropped photo is used as-is.
+  Future<String?> _cropImage(String sourcePath) async {
+    try {
+      final CroppedFile? cropped = await ImageCropper().cropImage(
+        sourcePath: sourcePath,
+        compressQuality: 90,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Bill',
+            toolbarColor: AppColors.brandBlue,
+            toolbarWidgetColor: Colors.white,
+            activeControlsWidgetColor: AppColors.brandBlue,
+            lockAspectRatio: false,
+          ),
+          IOSUiSettings(title: 'Crop Bill'),
+        ],
+      );
+      return cropped?.path;
+    } on Exception catch (e) {
+      _showMessage('Could not crop the image: $e');
+      return null;
+    }
+  }
+
+  /// Re-opens the crop UI for the currently selected photo.
+  Future<void> _cropCurrentImage() async {
+    final String? path = _imagePath.value;
+    if (path == null) {
+      return;
+    }
+    final String? cropped = await _cropImage(path);
+    if (cropped != null) {
+      _imagePath.value = cropped;
     }
   }
 
@@ -158,9 +199,28 @@ class _ScanScreenState extends State<ScanScreen> {
                     if (path == null) {
                       return const ScanPlaceholder();
                     }
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.file(File(path), fit: BoxFit.contain),
+                    return Stack(
+                      children: [
+                        Positioned.fill(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.file(File(path), fit: BoxFit.contain),
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Material(
+                            color: AppColors.brandNavy.withValues(alpha: 0.6),
+                            shape: const CircleBorder(),
+                            child: IconButton(
+                              tooltip: 'Crop image',
+                              icon: const Icon(Icons.crop, color: Colors.white),
+                              onPressed: _cropCurrentImage,
+                            ),
+                          ),
+                        ),
+                      ],
                     );
                   },
                 ),

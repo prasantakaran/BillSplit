@@ -45,6 +45,13 @@ abstract final class BillParser {
   /// Currency marks OCR sometimes splits into their own token.
   static const Set<String> _currencyOnlyTokens = {'rs', 'rs.', 'inr', '₹'};
 
+  /// A price glued straight onto the item name with no space:
+  /// "CHARCOAL GRILLED CALAMAR425.00".
+  static final RegExp _gluedPrice = RegExp(
+    r'([A-Za-z])((?:rs\.?|inr|₹)?[0-9][0-9,]*(?:\.[0-9]{1,2})?)\s*$',
+    caseSensitive: false,
+  );
+
   /// OCR digit lookalikes inside otherwise-numeric tokens.
   static const Map<String, String> _digitLookalikes = {
     'O': '0',
@@ -85,6 +92,7 @@ abstract final class BillParser {
     'grand total',
     'total amount',
     'net amount',
+    'gross amount',
     'amount payable',
     'total',
   ];
@@ -119,6 +127,9 @@ abstract final class BillParser {
     'change',
     'tender',
     'round off',
+    'adjustment',
+    'covers',
+    'shift',
     'thank',
     'visit',
   ];
@@ -135,12 +146,17 @@ abstract final class BillParser {
       if (rawLine.trim().isEmpty) {
         continue;
       }
-      // Fix digit-lookalike OCR misreads ("8O" → "80") token by token.
+      // Fix digit-lookalike OCR misreads ("8O" → "80") token by token, then
+      // detach a price glued straight onto the last word of the name.
       final String line = rawLine
           .trim()
           .split(RegExp(r'\s+'))
           .map(_normalizeDigits)
-          .join(' ');
+          .join(' ')
+          .replaceFirstMapped(
+            _gluedPrice,
+            (match) => '${match.group(1)} ${match.group(2)}',
+          );
 
       final RegExpMatch? priceMatch = _priceAtEnd.firstMatch(line);
       if (priceMatch == null) {
