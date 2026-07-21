@@ -12,8 +12,10 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../../shared/widgets/show_case_widget.dart';
 import '../../../split/presentation/providers/bill_flow_state.dart';
-import '../../data/services/ocr_service.dart';
+import '../../data/services/ml_kit_ocr_service.dart';
 import '../../domain/bill_parser.dart';
+import '../../domain/services/ocr_service.dart';
+import '../../domain/usecases/scan_bill_use_case.dart';
 import '../widgets/image_source_buttons.dart';
 import '../widgets/scan_placeholder.dart';
 import 'edit_items_screen.dart';
@@ -31,7 +33,8 @@ class ScanScreen extends StatefulWidget {
 
 class _ScanScreenState extends State<ScanScreen> {
   final ImagePicker _picker = ImagePicker();
-  final OcrService _ocrService = OcrService();
+  final OcrService _ocrService = MlKitOcrService();
+  late final ScanBillUseCase _scanBillUseCase = ScanBillUseCase(_ocrService);
 
   final ValueNotifier<String?> _imagePath = ValueNotifier<String?>(null);
   final ValueNotifier<bool> _isProcessing = ValueNotifier<bool>(false);
@@ -158,8 +161,7 @@ class _ScanScreenState extends State<ScanScreen> {
     }
     _isProcessing.value = true;
     try {
-      final String rawText = await _ocrService.extractText(path);
-      final ParsedBill parsed = BillParser.parse(rawText);
+      final ParsedBill parsed = await _scanBillUseCase(path);
 
       if (!mounted) {
         return;

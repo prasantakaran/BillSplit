@@ -10,8 +10,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/validation.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../split/presentation/services/settlement_payment_actions.dart';
 import '../../../split/presentation/widgets/settlement_card.dart';
-import '../../../split/presentation/widgets/settlement_payment_actions.dart';
 
 class BillDetailSheet extends StatefulWidget {
   const BillDetailSheet({
@@ -29,6 +29,7 @@ class BillDetailSheet extends StatefulWidget {
 
 class _BillDetailSheetState extends State<BillDetailSheet> {
   final TextEditingController _upiController = TextEditingController();
+  final SettlementPaymentActions _paymentActions = SettlementPaymentActions();
 
   @override
   void dispose() {
@@ -127,20 +128,20 @@ class _BillDetailSheetState extends State<BillDetailSheet> {
               for (final Settlement s in bill.settlements)
                 SettlementCard(
                   settlement: s,
-                  onShare: () => SettlementPaymentActions.shareRequest(
+                  onShare: () => _paymentActions.shareRequest(
                     settlement: s,
                     billName: bill.restaurantName,
                     payeeName: _payeeName,
                     payeeUpiId: _myUpiId,
                   ),
-                  onPreviewLink: () => SettlementPaymentActions.openUpiApp(
+                  onPreviewLink: () => _paymentActions.openUpiApp(
                     context,
                     settlement: s,
                     billName: bill.restaurantName,
                     payeeName: _payeeName,
                     payeeUpiId: _myUpiId,
                   ),
-                  onShowQr: () => SettlementPaymentActions.showQr(
+                  onShowQr: () => _paymentActions.showQr(
                     context,
                     settlement: s,
                     billName: bill.restaurantName,

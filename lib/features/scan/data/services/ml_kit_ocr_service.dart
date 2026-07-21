@@ -1,24 +1,21 @@
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
-/// On-device text recognition for bill photos via Google ML Kit.
-class OcrService {
+import '../../domain/services/ocr_service.dart';
+
+class MlKitOcrService implements OcrService {
   final TextRecognizer _recognizer = TextRecognizer(
     script: TextRecognitionScript.latin,
   );
 
   /// Runs OCR on the image at [imagePath] and returns text reassembled into
   /// visual rows, ready for BillParser.
+  @override
   Future<String> extractText(String imagePath) async {
     final InputImage image = InputImage.fromFilePath(imagePath);
     final RecognizedText result = await _recognizer.processImage(image);
     return _reconstructRows(result);
   }
 
-  /// ML Kit groups tabular receipts into column blocks, so [RecognizedText.text]
-  /// returns all item names followed by all prices instead of "name price"
-  /// rows. Rebuild the visual rows instead: collect every text line with its
-  /// bounding box, cluster lines whose vertical centres overlap, and join
-  /// each cluster left-to-right.
   String _reconstructRows(RecognizedText recognized) {
     final List<TextLine> lines = [
       for (final TextBlock block in recognized.blocks) ...block.lines,
@@ -59,5 +56,6 @@ class OcrService {
   }
 
   /// Releases the native recognizer.
+  @override
   Future<void> dispose() => _recognizer.close();
 }

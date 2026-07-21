@@ -1,17 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/models/settlement.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/upi_link_builder.dart';
+import '../../data/services/native_url_launcher_service.dart';
+import '../../data/services/share_plus_sharing_service.dart';
 import '../../domain/payment_message_builder.dart';
-import 'upi_qr_sheet.dart';
+import '../../domain/services/sharing_service.dart';
+import '../../domain/services/url_launcher_service.dart';
+import '../widgets/upi_qr_sheet.dart';
 
 /// Share / open-UPI-app / QR actions for one settlement, shared by the
 /// results screen and the history bill detail sheet.
-abstract final class SettlementPaymentActions {
-  static Future<void> shareRequest({
+class SettlementPaymentActions {
+  SettlementPaymentActions({
+    SharingService? sharingService,
+    UrlLauncherService? urlLauncherService,
+  }) : _sharingService = sharingService ?? SharePlusSharingService(),
+       _urlLauncherService = urlLauncherService ?? NativeUrlLauncherService();
+
+  final SharingService _sharingService;
+  final UrlLauncherService _urlLauncherService;
+
+  Future<void> shareRequest({
     required Settlement settlement,
     required String billName,
     required String payeeName,
@@ -23,10 +34,10 @@ abstract final class SettlementPaymentActions {
       payeeName: payeeName,
       payeeUpiId: payeeUpiId,
     );
-    await SharePlus.instance.share(ShareParams(text: message));
+    await _sharingService.share(message);
   }
 
-  static Future<void> openUpiApp(
+  Future<void> openUpiApp(
     BuildContext context, {
     required Settlement settlement,
     required String billName,
@@ -45,16 +56,13 @@ abstract final class SettlementPaymentActions {
         note: 'BillSplit: $billName',
       ),
     );
-    final bool launched = await launchUrl(
-      link,
-      mode: LaunchMode.externalApplication,
-    );
+    final bool launched = await _urlLauncherService.launch(link);
     if (!launched && context.mounted) {
       _showMessage(context, 'No UPI app found on this device.');
     }
   }
 
-  static void showQr(
+  void showQr(
     BuildContext context, {
     required Settlement settlement,
     required String billName,
@@ -85,7 +93,7 @@ abstract final class SettlementPaymentActions {
     );
   }
 
-  static void _showMessage(BuildContext context, String message) {
+  void _showMessage(BuildContext context, String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));

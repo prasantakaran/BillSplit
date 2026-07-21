@@ -20,8 +20,8 @@ import '../../../history/domain/repositories/bills_repository.dart';
 import '../providers/bill_flow_state.dart';
 import '../widgets/bill_total_row.dart';
 import '../widgets/save_bill_bar.dart';
+import '../services/settlement_payment_actions.dart';
 import '../widgets/settlement_card.dart';
-import '../widgets/settlement_payment_actions.dart';
 
 class ResultsScreen extends StatefulWidget {
   const ResultsScreen({super.key, required this.settlements});
@@ -35,6 +35,7 @@ class ResultsScreen extends StatefulWidget {
 class _ResultsScreenState extends State<ResultsScreen> {
   late final BillsRepository _repository;
   late final User _user;
+  final SettlementPaymentActions _paymentActions = SettlementPaymentActions();
 
   final TextEditingController _restaurantController = TextEditingController();
   final TextEditingController _upiController = TextEditingController();
@@ -75,7 +76,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
   String get _payeeName => _user.displayName ?? 'BillSplit user';
 
   Future<void> _shareRequest(Settlement s) {
-    return SettlementPaymentActions.shareRequest(
+    return _paymentActions.shareRequest(
       settlement: s,
       billName: _billName,
       payeeName: _payeeName,
@@ -84,7 +85,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 
   Future<void> _previewUpiLink(Settlement s) {
-    return SettlementPaymentActions.openUpiApp(
+    return _paymentActions.openUpiApp(
       context,
       settlement: s,
       billName: _billName,
@@ -94,7 +95,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 
   void _showQrCode(Settlement s) {
-    SettlementPaymentActions.showQr(
+    _paymentActions.showQr(
       context,
       settlement: s,
       billName: _billName,
