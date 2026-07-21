@@ -1,36 +1,42 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../core/models/friend.dart';
+import '../../domain/repositories/friends_repository.dart';
 
-/// Firestore access for the signed-in user's friends.
-///
-/// Per the app architecture, repositories are the only classes allowed to
-/// talk to Firestore — screens consume this via [watchFriends] streams.
-class FriendsRepository {
-  FriendsRepository({required FirebaseFirestore firestore, required String uid})
-      : _collection =
-            firestore.collection('users').doc(uid).collection('friends');
-
+class FriendsRepositoryImpl implements FriendsRepository {
   final CollectionReference<Map<String, dynamic>> _collection;
 
-  /// Live list of friends, ordered by name.
+  FriendsRepositoryImpl({
+    required FirebaseFirestore firestore,
+    required String uid,
+  }) : _collection = firestore
+           .collection('users')
+           .doc(uid)
+           .collection('friends');
+
+  @override
   Stream<List<Friend>> watchFriends() {
-    return _collection.orderBy('name').snapshots().map(
+    return _collection
+        .orderBy('name')
+        .snapshots()
+        .map(
           (snapshot) => snapshot.docs
               .map((doc) => Friend.fromMap(doc.id, doc.data()))
               .toList(),
         );
   }
 
+  @override
   Future<void> addFriend(Friend friend) {
     return _collection.doc(friend.id).set(friend.toMap());
   }
 
-  /// Overwrites the friend document with the edited details.
+  @override
   Future<void> updateFriend(Friend friend) {
     return _collection.doc(friend.id).set(friend.toMap());
   }
 
+  @override
   Future<void> deleteFriend(String id) {
     return _collection.doc(id).delete();
   }

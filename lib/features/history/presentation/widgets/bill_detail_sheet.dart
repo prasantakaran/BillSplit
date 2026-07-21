@@ -13,9 +13,6 @@ import '../../../../shared/widgets/app_text_field.dart';
 import '../../../split/presentation/widgets/settlement_card.dart';
 import '../../../split/presentation/widgets/settlement_payment_actions.dart';
 
-/// Bottom-sheet detail view of a saved bill: items, tax/total and
-/// per-person shares, with the same share / UPI / QR payment-request
-/// actions as the results screen.
 class BillDetailSheet extends StatefulWidget {
   const BillDetailSheet({
     super.key,
@@ -166,7 +163,10 @@ class _BillDetailSheetState extends State<BillDetailSheet> {
     );
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [Text(label, style: style), Text(value, style: style)],
+      children: [
+        Text(label, style: style),
+        Text(value, style: style),
+      ],
     );
   }
 }

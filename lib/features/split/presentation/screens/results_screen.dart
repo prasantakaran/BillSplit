@@ -15,7 +15,8 @@ import '../../../../core/utils/validation.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../../shared/widgets/show_case_widget.dart';
-import '../../../history/data/repositories/bills_repository.dart';
+import '../../../history/data/repositories/bills_repository_impl.dart';
+import '../../../history/domain/repositories/bills_repository.dart';
 import '../providers/bill_flow_state.dart';
 import '../widgets/bill_total_row.dart';
 import '../widgets/save_bill_bar.dart';
@@ -43,7 +44,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
   void initState() {
     super.initState();
     _user = context.read<User?>()!;
-    _repository = BillsRepository(
+    _repository = BillsRepositoryImpl(
       firestore: FirebaseFirestore.instance,
       uid: _user.uid,
     );

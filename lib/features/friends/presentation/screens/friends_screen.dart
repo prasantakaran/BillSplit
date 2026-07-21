@@ -7,15 +7,11 @@ import '../../../../core/models/friend.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
-import '../../data/repositories/friends_repository.dart';
+import '../../data/repositories/friends_repository_impl.dart';
+import '../../domain/repositories/friends_repository.dart';
 import '../widgets/add_friend_dialog.dart';
 import '../widgets/friend_card.dart';
 
-/// Lists the user's friends live from Firestore.
-///
-/// Per the app architecture this uses a plain [StreamBuilder] on the
-/// repository stream — no provider state is needed for Firestore-backed
-/// lists.
 class FriendsScreen extends StatefulWidget {
   const FriendsScreen({super.key});
 
@@ -33,7 +29,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   void initState() {
     super.initState();
     final User user = context.read<User?>()!;
-    _repository = FriendsRepository(
+    _repository = FriendsRepositoryImpl(
       firestore: FirebaseFirestore.instance,
       uid: user.uid,
     );
@@ -228,7 +224,11 @@ class _FriendsMessage extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 64, color: AppColors.brandBlue.withValues(alpha: 0.4)),
+          Icon(
+            icon,
+            size: 64,
+            color: AppColors.brandBlue.withValues(alpha: 0.4),
+          ),
           const SizedBox(height: 16),
           Text(
             title,

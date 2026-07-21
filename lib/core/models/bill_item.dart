@@ -1,9 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-/// A single line item on a restaurant bill.
-///
-/// [sharedByFriendIds] holds the ids of the friends who shared this item;
-/// the settlement calculator divides [price] equally between them.
 class BillItem extends Equatable {
   const BillItem({
     required this.id,

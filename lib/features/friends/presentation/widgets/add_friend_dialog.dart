@@ -10,11 +10,6 @@ import '../../../../core/utils/validation.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 
-/// Dialog collecting a friend's details — for a new friend, or editing an
-/// existing one when [initial] is passed.
-///
-/// Returns the created/edited [Friend] via [show], or null when cancelled.
-/// Saving to Firestore is the caller's job — the dialog is UI only.
 class AddFriendDialog extends StatefulWidget {
   const AddFriendDialog({super.key, this.initial});
 

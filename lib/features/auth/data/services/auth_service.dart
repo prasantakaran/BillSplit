@@ -1,16 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-class AuthException implements Exception {
-  const AuthException(this.message);
-
-  final String message;
-
-  @override
-  String toString() => message;
-}
+import '../../domain/exceptions/auth_exception.dart';
 
 // Wraps Firebase Authentication and Google Sign-In behind a single API.
+// This is a data-layer adapter: [AuthRepositoryImpl](../repositories/auth_repository_impl.dart)
+// exposes it to the rest of the app through the [AuthRepository](../../domain/repositories/auth_repository.dart)
+// interface.
 class AuthService {
   AuthService({FirebaseAuth? firebaseAuth, GoogleSignIn? googleSignIn})
     : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,

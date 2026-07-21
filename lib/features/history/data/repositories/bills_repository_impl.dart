@@ -1,18 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../core/models/bill.dart';
+import '../../domain/repositories/bills_repository.dart';
 
-/// Firestore access for the signed-in user's saved bills.
-///
-/// Per the app architecture, repositories are the only classes allowed to
-/// talk to Firestore.
-class BillsRepository {
-  BillsRepository({required FirebaseFirestore firestore, required String uid})
-      : _collection = firestore.collection('users').doc(uid).collection('bills');
-
+class BillsRepositoryImpl implements BillsRepository {
   final CollectionReference<Map<String, dynamic>> _collection;
 
-  /// Live list of saved bills, newest first.
+  BillsRepositoryImpl({
+    required FirebaseFirestore firestore,
+    required String uid,
+  }) : _collection = firestore.collection('users').doc(uid).collection('bills');
+
+  @override
   Stream<List<Bill>> watchBills() {
     return _collection
         .orderBy('createdAtMillis', descending: true)
@@ -24,10 +23,12 @@ class BillsRepository {
         );
   }
 
+  @override
   Future<void> saveBill(Bill bill) {
     return _collection.doc(bill.id).set(bill.toMap());
   }
 
+  @override
   Future<void> deleteBill(String id) {
     return _collection.doc(id).delete();
   }

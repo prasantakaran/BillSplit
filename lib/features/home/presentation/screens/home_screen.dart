@@ -10,8 +10,9 @@ import '../../../../core/utils/app_showcase_display_service.dart';
 import '../../../../core/utils/showcase_keys.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../../shared/widgets/show_case_widget.dart';
-import '../../../auth/data/services/auth_service.dart';
-import '../../../friends/data/repositories/friends_repository.dart';
+import '../../../auth/domain/repositories/auth_repository.dart';
+import '../../../friends/data/repositories/friends_repository_impl.dart';
+import '../../../friends/domain/repositories/friends_repository.dart';
 import '../../../friends/presentation/screens/friends_screen.dart';
 import '../../../friends/presentation/widgets/add_friend_dialog.dart';
 import '../../../history/presentation/screens/history_screen.dart';
@@ -45,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     final User user = context.read<User?>()!;
-    _repository = FriendsRepository(
+    _repository = FriendsRepositoryImpl(
       firestore: FirebaseFirestore.instance,
       uid: user.uid,
     );
@@ -65,9 +66,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  /// Android may kill the app while the system camera is open; the app then
-  /// restarts from scratch and lands here. If image_picker is holding the
-  /// photo taken before the kill, jump straight back into the scan flow.
   Future<void> _resumeLostScan() async {
     try {
       final LostDataResponse response = await ImagePicker().retrieveLostData();
@@ -122,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!confirmed || !mounted) {
       return;
     }
-    await context.read<AuthService>().signOut();
+    await context.read<AuthRepository>().signOut();
   }
 
   @override
@@ -163,7 +161,8 @@ class _HomeScreenState extends State<HomeScreen> {
         showcaseKey: ShowcaseKeys.homeAddFriendFab,
         group: ShowcaseKeys.homeGroup,
         title: 'Add Friends',
-        description: 'Add the people you split bills with — you\'ll pick '
+        description:
+            'Add the people you split bills with — you\'ll pick '
             'from this list when assigning items.',
         icon: Icons.person_add_alt_1,
         child: FloatingActionButton.extended(

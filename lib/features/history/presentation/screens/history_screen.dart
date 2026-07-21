@@ -9,7 +9,8 @@ import 'package:provider/provider.dart';
 import '../../../../core/models/bill.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
-import '../../data/repositories/bills_repository.dart';
+import '../../data/repositories/bills_repository_impl.dart';
+import '../../domain/repositories/bills_repository.dart';
 import '../widgets/bill_card.dart';
 import '../widgets/bill_detail_sheet.dart';
 import '../widgets/empty_history.dart';
@@ -36,7 +37,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   void initState() {
     super.initState();
     final User user = context.read<User?>()!;
-    _repository = BillsRepository(
+    _repository = BillsRepositoryImpl(
       firestore: FirebaseFirestore.instance,
       uid: user.uid,
     );

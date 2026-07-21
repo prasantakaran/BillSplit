@@ -10,7 +10,8 @@ import '../../../../core/utils/app_showcase_display_service.dart';
 import '../../../../core/utils/showcase_keys.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../../shared/widgets/show_case_widget.dart';
-import '../../../friends/data/repositories/friends_repository.dart';
+import '../../../friends/data/repositories/friends_repository_impl.dart';
+import '../../../friends/domain/repositories/friends_repository.dart';
 import '../../../friends/presentation/widgets/add_friend_dialog.dart';
 import '../../domain/settlement_calculator.dart';
 import '../providers/bill_flow_state.dart';
@@ -38,7 +39,7 @@ class _AssignScreenState extends State<AssignScreen> {
   void initState() {
     super.initState();
     final User user = context.read<User?>()!;
-    _repository = FriendsRepository(
+    _repository = FriendsRepositoryImpl(
       firestore: FirebaseFirestore.instance,
       uid: user.uid,
     );

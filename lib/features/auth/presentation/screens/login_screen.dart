@@ -5,7 +5,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validation.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
-import '../../data/services/auth_service.dart';
+import '../../domain/exceptions/auth_exception.dart';
+import '../../domain/repositories/auth_repository.dart';
 import '../widgets/auth_header.dart';
 import '../widgets/auth_mode_section.dart';
 import '../widgets/auth_mode_toggle.dart';
@@ -46,16 +47,16 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final AuthService authService = context.read<AuthService>();
+    final AuthRepository authRepository = context.read<AuthRepository>();
     final String email = _emailController.text.trim();
     final String password = _passwordController.text;
 
     _isSubmitting.value = true;
     try {
       if (_isRegistering.value) {
-        await authService.registerWithEmail(email, password);
+        await authRepository.registerWithEmail(email, password);
       } else {
-        await authService.signInWithEmail(email, password);
+        await authRepository.signInWithEmail(email, password);
       }
       // Success: AuthGate reacts to the auth state stream and shows home.
     } on AuthException catch (e) {
@@ -78,10 +79,10 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final AuthService authService = context.read<AuthService>();
+    final AuthRepository authRepository = context.read<AuthRepository>();
     _isSubmitting.value = true;
     try {
-      await authService.sendPasswordResetEmail(email);
+      await authRepository.sendPasswordResetEmail(email);
       _showMessage(
         'Password reset email sent to $email.',
         color: AppColors.positiveAmount,
@@ -96,11 +97,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _onGoogleSignInPressed() async {
-    final AuthService authService = context.read<AuthService>();
+    final AuthRepository authRepository = context.read<AuthRepository>();
     _isSubmitting.value = true;
     try {
       // Returns false when the user dismisses the account picker — no error.
-      await authService.signInWithGoogle();
+      await authRepository.signInWithGoogle();
     } on AuthException catch (e) {
       _showMessage(e.message, color: AppColors.negativeAmount);
     } finally {

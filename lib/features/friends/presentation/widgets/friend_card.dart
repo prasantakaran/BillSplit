@@ -3,9 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/models/friend.dart';
 import '../../../../core/theme/app_colors.dart';
 
-/// Card row for a single friend: initial avatar, name, UPI/phone subtitle.
-///
-/// Shows trailing edit/delete buttons only when the callbacks are provided.
 class FriendCard extends StatelessWidget {
   const FriendCard({
     super.key,
@@ -20,8 +17,9 @@ class FriendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String initial =
-        friend.name.isEmpty ? '?' : friend.name[0].toUpperCase();
+    final String initial = friend.name.isEmpty
+        ? '?'
+        : friend.name[0].toUpperCase();
 
     return Container(
       decoration: BoxDecoration(
