@@ -1,3 +1,4 @@
+import 'package:bill_split/features/scan/data/model/parse_bill_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bill_split/features/scan/domain/bill_parser.dart';
@@ -32,13 +33,11 @@ Thank You! Visit Again
       expect(parsed.detectedTotal, 535.50);
     });
 
-    test(
-      'corrects ₹-misread-as-7 digits using price × qty = total columns '
-      '(Sunrise Foods receipt)',
-      () {
-        // Real OCR output shape: "₹998" read as "7998", "₹80" as "780",
-        // plus a stray "T" fragment inside one row's columns.
-        const rawText = '''
+    test('corrects ₹-misread-as-7 digits using price × qty = total columns '
+        '(Sunrise Foods receipt)', () {
+      // Real OCR output shape: "₹998" read as "7998", "₹80" as "780",
+      // plus a stray "T" fragment inside one row's columns.
+      const rawText = '''
 Sunrise Foods Pvt Ltd
 9 Palm Court, Delhi, Gujarat 856604
 Name: Pooja Iyer Invoice No: INV-2026-0423
@@ -58,34 +57,31 @@ GSTIN: 30XICTI5508S8Z5
 THANK YOU. VISIT AGAIN.
 ''';
 
-        final ParsedBill parsed = BillParser.parse(rawText);
+      final ParsedBill parsed = BillParser.parse(rawText);
 
-        expect(parsed.items.map((item) => item.name).toList(), [
-          'Masala Dosa',
-          'Masala Dosa',
-          'Paneer Butter Masala',
-          'Paneer Butter Masala',
-          'Cold Coffee',
-          'Masala Dosa',
-        ]);
-        expect(parsed.items.map((item) => item.price).toList(), [
-          1996,
-          998,
-          798,
-          594,
-          480,
-          320,
-        ]);
-        expect(parsed.taxAmount, closeTo(259.30, 0.001));
-        expect(parsed.detectedTotal, 5445.30);
-      },
-    );
+      expect(parsed.items.map((item) => item.name).toList(), [
+        'Masala Dosa',
+        'Masala Dosa',
+        'Paneer Butter Masala',
+        'Paneer Butter Masala',
+        'Cold Coffee',
+        'Masala Dosa',
+      ]);
+      expect(parsed.items.map((item) => item.price).toList(), [
+        1996,
+        998,
+        798,
+        594,
+        480,
+        320,
+      ]);
+      expect(parsed.taxAmount, closeTo(259.30, 0.001));
+      expect(parsed.detectedTotal, 5445.30);
+    });
 
-    test(
-      'parses thermal Qty/Rate/Amt receipts with payment metadata '
-      '(Tasty Forks receipt)',
-      () {
-        const rawText = '''
+    test('parses thermal Qty/Rate/Amt receipts with payment metadata '
+        '(Tasty Forks receipt)', () {
+      const rawText = '''
 Tasty Forks
 123 Market Road, City
 GSTIN: 22AAAAA0000A1Z5
@@ -116,30 +112,27 @@ Thank you! Visit again.
 GST included as applicable
 ''';
 
-        final ParsedBill parsed = BillParser.parse(rawText);
+      final ParsedBill parsed = BillParser.parse(rawText);
 
-        expect(parsed.items.map((item) => item.name).toList(), [
-          'Paneer Tikka',
-          'Butter Naan',
-          'Masala Chai',
-        ]);
-        expect(parsed.items.map((item) => item.price).toList(), [
-          240.00,
-          90.00,
-          120.00,
-        ]);
-        // "Taxable Value 450.00" must not inflate the tax.
-        expect(parsed.taxAmount, closeTo(22.50, 0.001));
-        expect(parsed.detectedSubtotal, 450.00);
-        expect(parsed.detectedTotal, 472.50);
-      },
-    );
+      expect(parsed.items.map((item) => item.name).toList(), [
+        'Paneer Tikka',
+        'Butter Naan',
+        'Masala Chai',
+      ]);
+      expect(parsed.items.map((item) => item.price).toList(), [
+        240.00,
+        90.00,
+        120.00,
+      ]);
+      // "Taxable Value 450.00" must not inflate the tax.
+      expect(parsed.taxAmount, closeTo(22.50, 0.001));
+      expect(parsed.detectedSubtotal, 450.00);
+      expect(parsed.detectedTotal, 472.50);
+    });
 
-    test(
-      'parses qty-first rows, glued prices and gross-amount totals '
-      '(Bombay Canteen receipt)',
-      () {
-        const rawText = '''
+    test('parses qty-first rows, glued prices and gross-amount totals '
+        '(Bombay Canteen receipt)', () {
+      const rawText = '''
 Tel :02249666666
 THE BOMBAY CANTEEN
 INDIAN CAFE & BAR
@@ -176,38 +169,35 @@ THAT YOU COME BACK SOON!
 CASHIER :VISHAL
 ''';
 
-        final ParsedBill parsed = BillParser.parse(rawText);
+      final ParsedBill parsed = BillParser.parse(rawText);
 
-        expect(parsed.items.map((item) => item.name).toList(), [
-          'BIRA WHITE',
-          'MANGO ICE TEA',
-          'MUSHROOM CHILLI FRY',
-          'CHARCOAL GRILLED CALAMAR',
-          'MUSTARD CHICKEN',
-          'KHAMIRI NAAN',
-          'COCONUT RICE',
-        ]);
-        expect(parsed.items.map((item) => item.price).toList(), [
-          790.00,
-          250.00,
-          375.00,
-          425.00,
-          650.00,
-          120.00,
-          120.00,
-        ]);
-        // Service charge + VAT + CGST + SGST; "Adjustments" excluded.
-        expect(parsed.taxAmount, closeTo(423.17, 0.001));
-        expect(parsed.detectedSubtotal, 2730.00);
-        expect(parsed.detectedTotal, 3154.00);
-      },
-    );
+      expect(parsed.items.map((item) => item.name).toList(), [
+        'BIRA WHITE',
+        'MANGO ICE TEA',
+        'MUSHROOM CHILLI FRY',
+        'CHARCOAL GRILLED CALAMAR',
+        'MUSTARD CHICKEN',
+        'KHAMIRI NAAN',
+        'COCONUT RICE',
+      ]);
+      expect(parsed.items.map((item) => item.price).toList(), [
+        790.00,
+        250.00,
+        375.00,
+        425.00,
+        650.00,
+        120.00,
+        120.00,
+      ]);
+      // Service charge + VAT + CGST + SGST; "Adjustments" excluded.
+      expect(parsed.taxAmount, closeTo(423.17, 0.001));
+      expect(parsed.detectedSubtotal, 2730.00);
+      expect(parsed.detectedTotal, 3154.00);
+    });
 
-    test(
-      'parses qty-x rows with ₹ amounts and em-dash metadata '
-      '(Cedarstay Hotels receipt)',
-      () {
-        const rawText = '''
+    test('parses qty-x rows with ₹ amounts and em-dash metadata '
+        '(Cedarstay Hotels receipt)', () {
+      const rawText = '''
 Cedarstay Hotels
 56 Civic Center, Mumbai, West
 Bengal 997697
@@ -232,37 +222,33 @@ THANK YOU. VISIT AGAIN.
 THANK YOU
 ''';
 
-        final ParsedBill parsed = BillParser.parse(rawText);
+      final ParsedBill parsed = BillParser.parse(rawText);
 
-        expect(parsed.items.map((item) => item.name).toList(), [
-          'Veg Biryani',
-          'Veg Biryani',
-          'Veg Biryani',
-          'Hakka Noodles',
-          'Hakka Noodles',
-          'Butter Naan',
-        ]);
-        expect(parsed.items.map((item) => item.price).toList(), [
-          360.00,
-          678.00,
-          658.00,
-          538.00,
-          657.00,
-          699.00,
-        ]);
-        expect(parsed.taxAmount, closeTo(179.50, 0.001));
-        expect(
-          parsed.taxLines.map((tax) => tax.label).toList(),
-          ['CGST (2.5%)', 'SGST (2.5%)'],
-        );
-        expect(
-          parsed.taxLines.map((tax) => tax.amount).toList(),
-          [89.75, 89.75],
-        );
-        expect(parsed.detectedSubtotal, 3590.00);
-        expect(parsed.detectedTotal, 3769.50);
-      },
-    );
+      expect(parsed.items.map((item) => item.name).toList(), [
+        'Veg Biryani',
+        'Veg Biryani',
+        'Veg Biryani',
+        'Hakka Noodles',
+        'Hakka Noodles',
+        'Butter Naan',
+      ]);
+      expect(parsed.items.map((item) => item.price).toList(), [
+        360.00,
+        678.00,
+        658.00,
+        538.00,
+        657.00,
+        699.00,
+      ]);
+      expect(parsed.taxAmount, closeTo(179.50, 0.001));
+      expect(parsed.taxLines.map((tax) => tax.label).toList(), [
+        'CGST (2.5%)',
+        'SGST (2.5%)',
+      ]);
+      expect(parsed.taxLines.map((tax) => tax.amount).toList(), [89.75, 89.75]);
+      expect(parsed.detectedSubtotal, 3590.00);
+      expect(parsed.detectedTotal, 3769.50);
+    });
 
     test('corrects ₹-misread tax amounts via subtotal + taxes = total', () {
       // "₹89.75" read as "789.75" on both tax lines; 3590 + 179.50 = 3769.50
@@ -282,10 +268,7 @@ TOTAL: ₹3,769.50
 
       final ParsedBill parsed = BillParser.parse(rawText);
 
-      expect(parsed.taxLines.map((tax) => tax.amount).toList(), [
-        89.75,
-        89.75,
-      ]);
+      expect(parsed.taxLines.map((tax) => tax.amount).toList(), [89.75, 89.75]);
       expect(parsed.taxAmount, closeTo(179.50, 0.001));
     });
 
@@ -307,16 +290,14 @@ TOTAL: ₹3,769.50
 
       final ParsedBill parsed = BillParser.parse(rawText);
 
-      expect(parsed.taxLines.map((tax) => tax.amount).toList(), [
-        89.75,
-        89.75,
-      ]);
+      expect(parsed.taxLines.map((tax) => tax.amount).toList(), [89.75, 89.75]);
       expect(parsed.taxAmount, closeTo(179.50, 0.001));
     });
 
-    test('corrects a ₹-misread price on a plain bill via the printed subtotal',
-        () {
-      const rawText = '''
+    test(
+      'corrects a ₹-misread price on a plain bill via the printed subtotal',
+      () {
+        const rawText = '''
 Filter Coffee 745
 Masala Dosa 120
 Subtotal 165.00
@@ -325,14 +306,15 @@ SGST 2.5% 4.12
 Total 173.25
 ''';
 
-      final ParsedBill parsed = BillParser.parse(rawText);
+        final ParsedBill parsed = BillParser.parse(rawText);
 
-      // 745 + 120 ≠ 165, but 45 + 120 = 165 — the only reading that fits.
-      expect(parsed.items.map((item) => item.price).toList(), [45, 120]);
-      expect(parsed.detectedSubtotal, 165.00);
-      expect(parsed.taxAmount, closeTo(8.25, 0.001));
-      expect(parsed.detectedTotal, 173.25);
-    });
+        // 745 + 120 ≠ 165, but 45 + 120 = 165 — the only reading that fits.
+        expect(parsed.items.map((item) => item.price).toList(), [45, 120]);
+        expect(parsed.detectedSubtotal, 165.00);
+        expect(parsed.taxAmount, closeTo(8.25, 0.001));
+        expect(parsed.detectedTotal, 173.25);
+      },
+    );
 
     test('normalizes digit-lookalike letters in price tokens', () {
       const rawText = '''
@@ -459,10 +441,11 @@ Total             1,250.00
       expect(parsed.detectedTotal, 1250.00);
     });
 
-    test('parses tabular Qty/Item/Rate/Amount rows (Spice Terrace receipt)',
-        () {
-      // Visual rows as reconstructed by OcrService from a columnar receipt.
-      const rawText = '''
+    test(
+      'parses tabular Qty/Item/Rate/Amount rows (Spice Terrace receipt)',
+      () {
+        // Visual rows as reconstructed by OcrService from a columnar receipt.
+        const rawText = '''
 SPICE TERRACE KITCHEN & GRILL
 45, MG Road, Indiranagar
 Bangalore - 560038
@@ -492,20 +475,21 @@ Grand Total (Rounded) ₹1,782.00
 Thank you! Visit Again!
 ''';
 
-      final ParsedBill parsed = BillParser.parse(rawText);
+        final ParsedBill parsed = BillParser.parse(rawText);
 
-      expect(parsed.items, hasLength(10));
-      expect(parsed.items[0].name, 'Masala Dosa');
-      expect(parsed.items[0].price, 290.00);
-      expect(parsed.items[1].name, 'Panner Butter Masala');
-      expect(parsed.items[1].price, 245.00);
-      expect(parsed.items[4].name, 'Garlic Naan');
-      expect(parsed.items[4].price, 120.00);
-      expect(parsed.items[9].name, 'Chocolate Brownie');
-      expect(parsed.items[9].price, 120.00);
-      expect(parsed.taxAmount, closeTo(162.00, 0.001));
-      expect(parsed.detectedTotal, 1782.00);
-    });
+        expect(parsed.items, hasLength(10));
+        expect(parsed.items[0].name, 'Masala Dosa');
+        expect(parsed.items[0].price, 290.00);
+        expect(parsed.items[1].name, 'Panner Butter Masala');
+        expect(parsed.items[1].price, 245.00);
+        expect(parsed.items[4].name, 'Garlic Naan');
+        expect(parsed.items[4].price, 120.00);
+        expect(parsed.items[9].name, 'Chocolate Brownie');
+        expect(parsed.items[9].price, 120.00);
+        expect(parsed.taxAmount, closeTo(162.00, 0.001));
+        expect(parsed.detectedTotal, 1782.00);
+      },
+    );
 
     test('returns an empty result for empty or garbage input', () {
       expect(BillParser.parse('').items, isEmpty);
