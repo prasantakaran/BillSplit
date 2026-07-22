@@ -286,11 +286,36 @@ class _ScanScreenState extends State<ScanScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              TextButton.icon(
-                onPressed: _addItemsManually,
-                icon: const Icon(Icons.edit_note_outlined),
-                label: const Text('Add items manually instead'),
+              const SizedBox(height: 10),
+              AppShowcase(
+                showcaseKey: ShowcaseKeys.scanManualButton,
+                group: ShowcaseKeys.scanGroup,
+                title: 'Add Items Manually',
+                description:
+                    'If the bill is hard to read, you can add '
+                    'items manually instead.',
+                icon: Icons.edit_note_outlined,
+                child: OutlinedButton.icon(
+                  onPressed: _addItemsManually,
+                  icon: const Icon(Icons.edit_note_outlined),
+                  label: const Text(
+                    'Add items manually instead',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(
+                      color: AppColors.brandNavy,
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

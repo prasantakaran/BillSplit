@@ -35,7 +35,16 @@ class HomeNavBar extends StatelessWidget {
             icon: Icons.home_outlined,
             child: const Icon(Icons.home_outlined),
           ),
-          activeIcon: const Icon(Icons.home),
+          activeIcon: AppShowcase(
+            showcaseKey: ShowcaseKeys.navHome,
+            group: ShowcaseKeys.homeGroup,
+            title: 'Dashboard',
+            description:
+                'Your home base — scan bills and manage friends '
+                'from here.',
+            icon: Icons.home,
+            child: const Icon(Icons.home),
+          ),
           label: 'Home',
         ),
         BottomNavigationBarItem(
@@ -49,7 +58,16 @@ class HomeNavBar extends StatelessWidget {
             icon: Icons.history_outlined,
             child: const Icon(Icons.history_outlined),
           ),
-          activeIcon: const Icon(Icons.history),
+          activeIcon: AppShowcase(
+            showcaseKey: ShowcaseKeys.navHistory,
+            group: ShowcaseKeys.homeGroup,
+            title: 'Bill History',
+            description:
+                'Every bill you\'ve split before, all in one '
+                'place.',
+            icon: Icons.history,
+            child: const Icon(Icons.history),
+          ),
           label: 'History',
         ),
       ],

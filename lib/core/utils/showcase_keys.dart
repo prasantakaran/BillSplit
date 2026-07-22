@@ -26,7 +26,15 @@ class ShowcaseKeys {
   static final GlobalKey scanDetectButton = GlobalKey(
     debugLabel: 'scanDetectButton',
   );
-  static List<GlobalKey> get scanGroup => [scanSourceButtons, scanDetectButton];
+
+  static final GlobalKey scanManualButton = GlobalKey(
+    debugLabel: 'scanManualButton',
+  );
+  static List<GlobalKey> get scanGroup => [
+    scanSourceButtons,
+    scanDetectButton,
+    scanManualButton,
+  ];
 
   // ── Edit items
   static const String editItemsScreenId = 'editItems';

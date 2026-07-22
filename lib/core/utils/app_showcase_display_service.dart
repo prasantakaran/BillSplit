@@ -10,6 +10,7 @@ class AppShowcaseService {
   static const _prefix = 'showcase_seen_';
   static void registerShowcaseView() {
     ShowcaseView.register(
+      skipIfTargetNotPresent: true,
       onComplete: (index, key) {
         for (final entry in ShowcaseKeys.allGroups.entries) {
           if (entry.value.isNotEmpty && entry.value.last == key) {
@@ -17,8 +18,6 @@ class AppShowcaseService {
           }
         }
       },
-      // A user who dismisses the tour early (tap outside, system back) should
-      // not be shown it again on their next visit either.
       onDismiss: (dismissedAt) {
         if (dismissedAt == null) {
           return;
@@ -49,8 +48,6 @@ class AppShowcaseService {
     }
   }
 
-  /// Starts [screenId]'s tour if the user hasn't seen it yet. Safe to call
-  /// on every visit to the screen — it's a no-op once seen.
   static Future<void> startIfUnseen(String screenId) async {
     if (await hasSeen(screenId)) {
       return;
