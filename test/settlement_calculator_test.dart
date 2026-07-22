@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bill_split/core/models/bill_item.dart';
 import 'package:bill_split/core/models/settlement.dart';
-import 'package:bill_split/features/split/domain/settlement_calculator.dart';
+import 'package:bill_split/features/assign/domain/services/settlement_calculator.dart';
 
 void main() {
   const Map<String, String> names = {'a': 'Asha', 'b': 'Bala', 'c': 'Chitra'};

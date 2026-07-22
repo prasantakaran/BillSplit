@@ -7,8 +7,6 @@ class MlKitOcrService implements OcrService {
     script: TextRecognitionScript.latin,
   );
 
-  /// Runs OCR on the image at [imagePath] and returns text reassembled into
-  /// visual rows, ready for BillParser.
   @override
   Future<String> extractText(String imagePath) async {
     final InputImage image = InputImage.fromFilePath(imagePath);

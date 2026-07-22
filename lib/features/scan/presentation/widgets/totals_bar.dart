@@ -5,7 +5,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/showcase_keys.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/show_case_widget.dart';
-import '../../../split/presentation/providers/bill_flow_state.dart';
+import '../../../../shared/providers/bill_flow_state.dart';
 
 // This is Sticky footer for displaying bill totals.
 class TotalsBar extends StatelessWidget {

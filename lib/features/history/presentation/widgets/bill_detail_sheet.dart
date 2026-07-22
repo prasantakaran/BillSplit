@@ -10,8 +10,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/validation.dart';
 import '../../../../shared/widgets/app_text_field.dart';
-import '../../../split/presentation/services/settlement_payment_actions.dart';
-import '../../../split/presentation/widgets/settlement_card.dart';
+import '../../../payment/presentation/services/settlement_payment_actions.dart';
+import '../../../payment/presentation/widgets/settlement_card.dart';
 
 class BillDetailSheet extends StatefulWidget {
   const BillDetailSheet({

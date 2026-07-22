@@ -1,15 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../../core/models/bill_item.dart';
-import '../../../../core/models/tax_line.dart';
+import '../../core/models/bill_item.dart';
+import '../../core/models/tax_line.dart';
 
-/// Holds the draft bill through the temporary Scan -> Edit -> Assign ->
-/// Settle flow.
-///
-/// This is the app's single ChangeNotifier, per the architecture: multiple
-/// screens mutate and observe one evolving draft, so a shared notifier is
-/// the right tool. It is reset when a new scan starts.
 class BillFlowState extends ChangeNotifier {
   static const Uuid _uuid = Uuid();
 

@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/models/bill_item.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../split/presentation/providers/bill_flow_state.dart';
+import '../../../../shared/providers/bill_flow_state.dart';
 import 'edit_field_decoration.dart';
 
 class ItemRow extends StatefulWidget {

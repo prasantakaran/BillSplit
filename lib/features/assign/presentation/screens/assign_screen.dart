@@ -13,12 +13,12 @@ import '../../../../shared/widgets/show_case_widget.dart';
 import '../../../friends/data/repositories/friends_repository_impl.dart';
 import '../../../friends/domain/repositories/friends_repository.dart';
 import '../../../friends/presentation/widgets/add_friend_dialog.dart';
-import '../../domain/settlement_calculator.dart';
-import '../providers/bill_flow_state.dart';
+import '../../../../shared/providers/bill_flow_state.dart';
+import '../../../results/presentation/screens/results_screen.dart';
+import '../../domain/services/settlement_calculator.dart';
 import '../widgets/assign_footer.dart';
 import '../widgets/assign_item_card.dart';
 import '../widgets/no_friends_yet.dart';
-import 'results_screen.dart';
 
 class AssignScreen extends StatefulWidget {
   const AssignScreen({super.key});
@@ -30,9 +30,6 @@ class AssignScreen extends StatefulWidget {
 class _AssignScreenState extends State<AssignScreen> {
   late final FriendsRepository _repository;
   late final Stream<List<Friend>> _friendsStream;
-
-  /// Set once the showcase tour has been kicked off, so it isn't restarted
-  /// on every stream rebuild while items are still unassigned.
   bool _showcaseTriggered = false;
 
   @override
@@ -133,7 +130,8 @@ class _AssignScreenState extends State<AssignScreen> {
                         showcaseKey: ShowcaseKeys.assignFirstItemCard,
                         group: ShowcaseKeys.assignGroup,
                         title: 'Assign Items',
-                        description: 'Tap each friend\'s name to mark who '
+                        description:
+                            'Tap each friend\'s name to mark who '
                             'shared this item.',
                         icon: Icons.checklist_rtl,
                         child: card,

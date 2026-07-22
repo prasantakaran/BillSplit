@@ -1,16 +1,6 @@
-import '../../../core/models/bill_item.dart';
-import '../../../core/models/settlement.dart';
+import '../../../../core/models/bill_item.dart';
+import '../../../../core/models/settlement.dart';
 
-/// Computes what each friend owes for a bill.
-///
-/// Pure Dart — no Flutter or Firebase imports — fully unit-testable
-/// (see test/settlement_calculator_test.dart).
-///
-/// Rules:
-/// * Each item's price is divided equally between the friends who shared it.
-/// * Tax is distributed proportionally to consumption:
-///   taxShare = taxAmount * friendItemsTotal / assignedSubtotal,
-///   so whoever ordered more pays more of the tax.
 abstract final class SettlementCalculator {
   static List<Settlement> calculate({
     required List<BillItem> items,
@@ -32,8 +22,9 @@ abstract final class SettlementCalculator {
       }
     }
 
-    final List<Settlement> settlements =
-        itemsTotalByFriend.entries.map((entry) {
+    final List<Settlement> settlements = itemsTotalByFriend.entries.map((
+      entry,
+    ) {
       final double taxShare = assignedSubtotal == 0
           ? 0
           : taxAmount * entry.value / assignedSubtotal;
@@ -43,8 +34,7 @@ abstract final class SettlementCalculator {
         itemsTotal: _roundToPaise(entry.value),
         taxShare: _roundToPaise(taxShare),
       );
-    }).toList()
-          ..sort((a, b) => b.totalOwed.compareTo(a.totalOwed));
+    }).toList()..sort((a, b) => b.totalOwed.compareTo(a.totalOwed));
 
     return settlements;
   }

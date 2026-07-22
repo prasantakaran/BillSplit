@@ -24,11 +24,6 @@ class BillsRepositoryImpl implements BillsRepository {
   }
 
   @override
-  Future<void> saveBill(Bill bill) {
-    return _collection.doc(bill.id).set(bill.toMap());
-  }
-
-  @override
   Future<void> deleteBill(String id) {
     return _collection.doc(id).delete();
   }

@@ -5,7 +5,7 @@ import '../../../../core/models/bill_item.dart';
 import '../../../../core/models/friend.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
-import '../providers/bill_flow_state.dart';
+import '../../../../shared/providers/bill_flow_state.dart';
 
 class AssignItemCard extends StatelessWidget {
   const AssignItemCard({

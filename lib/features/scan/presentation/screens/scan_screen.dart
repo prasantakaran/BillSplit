@@ -11,7 +11,7 @@ import '../../../../core/utils/showcase_keys.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../../shared/widgets/show_case_widget.dart';
-import '../../../split/presentation/providers/bill_flow_state.dart';
+import '../../../../shared/providers/bill_flow_state.dart';
 import '../../data/services/ml_kit_ocr_service.dart';
 import '../../domain/bill_parser.dart';
 import '../../domain/services/ocr_service.dart';

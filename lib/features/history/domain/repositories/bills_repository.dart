@@ -4,7 +4,5 @@ import '../../../../core/models/bill.dart';
 abstract class BillsRepository {
   Stream<List<Bill>> watchBills();
 
-  Future<void> saveBill(Bill bill);
-
   Future<void> deleteBill(String id);
 }

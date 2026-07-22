@@ -6,7 +6,7 @@ import '../core/theme/app_theme.dart';
 import '../features/auth/data/services/auth_service.dart';
 import '../features/auth/presentation/providers/auth_provider.dart';
 import '../features/splash/presentation/screens/splash_screen.dart';
-import '../features/split/presentation/providers/bill_flow_state.dart';
+import '../shared/providers/bill_flow_state.dart';
 
 /// Root widget
 class BillSplitApp extends StatelessWidget {

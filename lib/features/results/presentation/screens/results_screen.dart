@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:bill_split/features/results/data/repository/save_bill_impl_repo.dart';
+import 'package:bill_split/features/results/domain/repository/save_bill_repo.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -17,11 +19,11 @@ import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../../shared/widgets/show_case_widget.dart';
 import '../../../history/data/repositories/bills_repository_impl.dart';
 import '../../../history/domain/repositories/bills_repository.dart';
-import '../providers/bill_flow_state.dart';
+import '../../../payment/presentation/services/settlement_payment_actions.dart';
+import '../../../payment/presentation/widgets/settlement_card.dart';
+import '../../../../shared/providers/bill_flow_state.dart';
 import '../widgets/bill_total_row.dart';
 import '../widgets/save_bill_bar.dart';
-import '../services/settlement_payment_actions.dart';
-import '../widgets/settlement_card.dart';
 
 class ResultsScreen extends StatefulWidget {
   const ResultsScreen({super.key, required this.settlements});
@@ -33,7 +35,7 @@ class ResultsScreen extends StatefulWidget {
 }
 
 class _ResultsScreenState extends State<ResultsScreen> {
-  late final BillsRepository _repository;
+  late final SaveBillRepository _repository;
   late final User _user;
   final SettlementPaymentActions _paymentActions = SettlementPaymentActions();
 
@@ -45,7 +47,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
   void initState() {
     super.initState();
     _user = context.read<User?>()!;
-    _repository = BillsRepositoryImpl(
+
+    _repository = SaveBillImplRepo(
       firestore: FirebaseFirestore.instance,
       uid: _user.uid,
     );
@@ -119,7 +122,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
       showcaseKey: ShowcaseKeys.resultsShareButton,
       group: ShowcaseKeys.resultsGroup,
       title: 'Collect Payment',
-      description: 'Share a payment request, open it in a UPI app, or show '
+      description:
+          'Share a payment request, open it in a UPI app, or show '
           'a QR code.',
       icon: Icons.share_outlined,
       child: card,
@@ -140,9 +144,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
     _isSaving.value = true;
     try {
-      // Firestore's set() future only completes once the SERVER acknowledges
-      // the write. Offline, the write is queued locally and synced later —
-      // so a timeout means "queued", not "failed".
       await _repository.saveBill(bill).timeout(const Duration(seconds: 10));
       _finishSave('Bill saved to your history.');
     } on TimeoutException {
