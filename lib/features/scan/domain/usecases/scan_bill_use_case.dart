@@ -1,3 +1,5 @@
+import 'package:bill_split/features/scan/data/model/parse_bill_model.dart';
+
 import '../bill_parser.dart';
 import '../services/ocr_service.dart';
 

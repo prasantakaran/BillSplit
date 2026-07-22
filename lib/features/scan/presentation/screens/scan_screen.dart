@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bill_split/features/scan/data/model/parse_bill_model.dart';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,7 +15,6 @@ import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../../shared/widgets/show_case_widget.dart';
 import '../../../../shared/providers/bill_flow_state.dart';
 import '../../data/services/ml_kit_ocr_service.dart';
-import '../../domain/bill_parser.dart';
 import '../../domain/services/ocr_service.dart';
 import '../../domain/usecases/scan_bill_use_case.dart';
 import '../widgets/image_source_buttons.dart';

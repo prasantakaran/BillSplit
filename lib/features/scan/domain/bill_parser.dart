@@ -1,40 +1,8 @@
+import 'package:bill_split/features/scan/data/model/parse_bill_model.dart';
 import 'package:equatable/equatable.dart';
 
 import '../../../core/models/bill_item.dart';
 import '../../../core/models/tax_line.dart';
-
-/// Result of parsing raw OCR text from a restaurant bill.
-class ParsedBill extends Equatable {
-  const ParsedBill({
-    required this.items,
-    required this.taxAmount,
-    this.taxLines = const [],
-    this.detectedTotal,
-    this.detectedSubtotal,
-  });
-
-  final List<BillItem> items;
-
-  /// Sum of all tax/charge lines; [taxLines] holds the printed breakdown.
-  final double taxAmount;
-
-  /// Each tax/charge line as printed on the bill (CGST, SGST, service
-  /// charge, ...), for display on the edit screen.
-  final List<TaxLine> taxLines;
-
-  final double? detectedTotal;
-
-  final double? detectedSubtotal;
-
-  @override
-  List<Object?> get props => [
-    items,
-    taxAmount,
-    taxLines,
-    detectedTotal,
-    detectedSubtotal,
-  ];
-}
 
 abstract final class BillParser {
   /// A price at the end of a line, optionally prefixed with a currency

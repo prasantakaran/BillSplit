@@ -12,6 +12,7 @@ Built with a focus on **Clean Architecture, scalable Flutter development, and pr
 * **Image Cropping**: Crop receipts before processing to improve OCR accuracy.
 * **On-Device OCR**: Uses Google ML Kit Text Recognition to extract bill information without uploading receipt images to a server.
 * **Intelligent Bill Parsing**: Converts OCR output into structured bill items, prices, taxes, subtotal, and total.
+* **Manual Entry Fallback**: Skip OCR entirely (or add missed rows) by entering bill items by hand when scanning isn't possible or doesn't detect everything.
 
 ### 2. **Intelligent OCR Error Correction**
 
@@ -48,6 +49,11 @@ Built with a focus on **Clean Architecture, scalable Flutter development, and pr
 * **Password Recovery**: Built-in password reset functionality.
 * **User-Specific Data**: Firestore data is organized and secured per authenticated user.
 
+### 7. **Guided Onboarding**
+
+* **First-Run Feature Tour**: Contextual showcase walkthroughs on the Home, Scan, Edit Items, Assign, and Results screens introduce key actions to new users.
+* **Seen-Once Persistence**: Each walkthrough is shown only once per device using local `shared_preferences` storage.
+
 ---
 
 ## 🛠️ Technology Stack
@@ -82,6 +88,8 @@ Built with a focus on **Clean Architecture, scalable Flutter development, and pr
 * **Equatable**: Value-based equality for domain models.
 * **UUID**: Generates unique identifiers for application entities.
 * **Intl**: Date and formatting utilities.
+* **ShowcaseView**: Drives the first-run, contextual feature-tour overlays.
+* **Shared Preferences**: Persists which onboarding walkthroughs a device has already seen.
 
 ---
 
@@ -123,18 +131,21 @@ This separation ensures that core business logic remains independent from Flutte
 ```text
 lib/
 ├── main.dart
+├── firebase_options.dart
 │
 ├── app/
 │   └── app.dart
 │
 ├── core/
 │   ├── constants/
-│   ├── models/
+│   ├── models/            # Bill, BillItem, Friend, Settlement, TaxLine
 │   ├── theme/
-│   └── utils/
+│   └── utils/              # currency, validation, UPI link builder,
+│                            # showcase keys & onboarding display service
 │
 ├── shared/
-│   └── widgets/
+│   ├── providers/          # BillFlowState (in-progress bill scan/split state)
+│   └── widgets/            # AppButton, AppTextField, AppSnackbar, etc.
 │
 └── features/
     ├── splash/
@@ -143,22 +154,35 @@ lib/
     │   └── presentation/
     │
     ├── home/
-    │
-    ├── friends/
-    │   ├── data/
     │   └── presentation/
     │
-    ├── scan/
+    ├── friends/
     │   ├── data/
     │   ├── domain/
     │   └── presentation/
     │
-    ├── split/
+    ├── scan/                # capture/crop/OCR + manual entry + item editing
+    │   ├── data/
+    │   ├── domain/
+    │   └── presentation/
+    │
+    ├── assign/              # assign scanned/manual items to friends
+    │   ├── domain/
+    │   └── presentation/
+    │
+    ├── results/             # settlement summary, restaurant/UPI details, save
+    │   ├── data/
+    │   ├── domain/
+    │   └── presentation/
+    │
+    ├── payment/             # UPI deep links, QR codes, share actions
+    │   ├── data/
     │   ├── domain/
     │   └── presentation/
     │
     └── history/
         ├── data/
+        ├── domain/
         └── presentation/
 
 test/
@@ -173,19 +197,19 @@ Authentication
       ↓
 Home & Friends
       ↓
-Scan Restaurant Bill
-      ↓
-Crop Bill Image
-      ↓
-On-Device OCR
-      ↓
-Bill Parsing & Validation
-      ↓
-Review & Edit Items
+Scan Restaurant Bill ──────────────┐
+      ↓                            │ (no photo / nothing detected)
+Crop Bill Image                    │
+      ↓                            │
+On-Device OCR                      │
+      ↓                            │
+Bill Parsing & Validation          │
+      ↓                            ↓
+Review & Edit Items  ←── Add Items Manually
       ↓
 Assign Items to Friends
       ↓
-Calculate Individual Shares
+Calculate Settlement Shares
       ↓
 UPI Payment / QR / Share
       ↓
