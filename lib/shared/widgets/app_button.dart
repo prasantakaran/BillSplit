@@ -10,6 +10,7 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.trailingIcon,
     this.isLoading = false,
+    this.backgroundColor,
   });
 
   final String label;
@@ -17,6 +18,7 @@ class AppButton extends StatelessWidget {
   final IconData? icon;
   final IconData? trailingIcon;
   final bool isLoading;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +28,7 @@ class AppButton extends StatelessWidget {
       child: FilledButton(
         onPressed: isLoading ? null : onPressed,
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.brandBlue,
+          backgroundColor: backgroundColor ?? AppColors.brandBlue,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 20),
           shape: RoundedRectangleBorder(

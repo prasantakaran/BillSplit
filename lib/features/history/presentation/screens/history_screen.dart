@@ -14,6 +14,7 @@ import '../../data/repositories/bills_repository_impl.dart';
 import '../../domain/repositories/bills_repository.dart';
 import '../widgets/bill_card.dart';
 import '../widgets/bill_detail_sheet.dart';
+import '../widgets/delete_bill_dialog.dart';
 import '../widgets/empty_history.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -200,28 +201,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _confirmDelete(Bill bill) async {
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete bill?'),
-        content: Text(
-          '"${bill.restaurantName}" from '
-          '${_dateFormat.format(bill.createdAt)} will be deleted.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: AppColors.negativeAmount),
-            ),
-          ),
-        ],
-      ),
+    final bool? confirmed = await DeleteBillDialog.show(
+      context,
+      bill: bill,
+      dateLabel: _dateFormat.format(bill.createdAt),
     );
     if (confirmed != true) {
       return;
