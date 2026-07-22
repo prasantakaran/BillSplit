@@ -24,13 +24,16 @@ class ParsedBill extends Equatable {
 
   final double? detectedTotal;
 
-  /// The pre-tax subtotal printed on the bill, if OCR found one. Used to
-  /// cross-check the parsed items and surfaced as a hint on the edit screen.
   final double? detectedSubtotal;
 
   @override
-  List<Object?> get props =>
-      [items, taxAmount, taxLines, detectedTotal, detectedSubtotal];
+  List<Object?> get props => [
+    items,
+    taxAmount,
+    taxLines,
+    detectedTotal,
+    detectedSubtotal,
+  ];
 }
 
 abstract final class BillParser {
@@ -281,10 +284,9 @@ abstract final class BillParser {
       final double taxTarget = detectedTotal - detectedSubtotal;
       if (taxTarget > 0 && (taxAmount - taxTarget).abs() > 0.01) {
         final List<double>? correctedTaxes =
-            _reconcilePrices(
-              [for (final String token in taxTokens) _valueVariants(token)],
-              taxTarget,
-            ) ??
+            _reconcilePrices([
+              for (final String token in taxTokens) _valueVariants(token),
+            ], taxTarget) ??
             _taxesFromPercentages(taxLines, detectedSubtotal, taxTarget);
         if (correctedTaxes != null) {
           taxAmount = 0;
@@ -300,7 +302,9 @@ abstract final class BillParser {
     }
 
     // A misread grand total is provable from subtotal + tax.
-    if (detectedSubtotal != null && detectedTotal != null && totalToken != null) {
+    if (detectedSubtotal != null &&
+        detectedTotal != null &&
+        totalToken != null) {
       final double expected = detectedSubtotal + taxAmount;
       if ((detectedTotal - expected).abs() > 0.01) {
         for (final double variant in _valueVariants(totalToken)) {
@@ -353,8 +357,7 @@ abstract final class BillParser {
       if (percent == null) {
         computed.add(tax.amount);
       } else {
-        final double value =
-            subtotal * double.parse(percent.group(1)!) / 100;
+        final double value = subtotal * double.parse(percent.group(1)!) / 100;
         computed.add((value * 100).roundToDouble() / 100);
       }
     }

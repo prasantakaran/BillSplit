@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validation.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../domain/exceptions/auth_exception.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -60,7 +61,9 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       // Success: AuthGate reacts to the auth state stream and shows home.
     } on AuthException catch (e) {
-      _showMessage(e.message, color: AppColors.negativeAmount);
+      if (mounted) {
+        AppSnackbar.showError(context, e.message);
+      }
     } finally {
       if (mounted) {
         _isSubmitting.value = false;
@@ -72,10 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final String email = _emailController.text.trim();
     final String? emailError = Validators.email(email);
     if (emailError != null) {
-      _showMessage(
-        '$emailError to reset your password.',
-        color: AppColors.negativeAmount,
-      );
+      AppSnackbar.showError(context, '$emailError to reset your password.');
       return;
     }
 
@@ -83,12 +83,16 @@ class _LoginScreenState extends State<LoginScreen> {
     _isSubmitting.value = true;
     try {
       await authRepository.sendPasswordResetEmail(email);
-      _showMessage(
-        'Password reset email sent to $email.',
-        color: AppColors.positiveAmount,
-      );
+      if (mounted) {
+        AppSnackbar.showSuccess(
+          context,
+          'Password reset email sent to $email.',
+        );
+      }
     } on AuthException catch (e) {
-      _showMessage(e.message, color: AppColors.negativeAmount);
+      if (mounted) {
+        AppSnackbar.showError(context, e.message);
+      }
     } finally {
       if (mounted) {
         _isSubmitting.value = false;
@@ -103,21 +107,14 @@ class _LoginScreenState extends State<LoginScreen> {
       // Returns false when the user dismisses the account picker — no error.
       await authRepository.signInWithGoogle();
     } on AuthException catch (e) {
-      _showMessage(e.message, color: AppColors.negativeAmount);
+      if (mounted) {
+        AppSnackbar.showError(context, e.message);
+      }
     } finally {
       if (mounted) {
         _isSubmitting.value = false;
       }
     }
-  }
-
-  void _showMessage(String message, {required Color color}) {
-    if (!mounted) {
-      return;
-    }
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message), backgroundColor: color));
   }
 
   @override

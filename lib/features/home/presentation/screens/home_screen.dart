@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -8,6 +9,7 @@ import '../../../../core/models/friend.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_showcase_display_service.dart';
 import '../../../../core/utils/showcase_keys.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../../shared/widgets/show_case_widget.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
@@ -38,9 +40,10 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 0 = dashboard, 1 = bill history.
   final ValueNotifier<int> _tabIndex = ValueNotifier<int>(0);
 
-  /// Set when [_resumeLostScan] navigates away to a recovered scan, so the
-  /// dashboard showcase doesn't start underneath the pushed screen.
   bool _navigatedAway = false;
+
+  DateTime? _lastBackPressTime;
+  static const Duration _exitPromptWindow = Duration(seconds: 2);
 
   @override
   void initState() {
@@ -76,13 +79,10 @@ class _HomeScreenState extends State<HomeScreen> {
       if (files == null || files.isEmpty) {
         return;
       }
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text('Recovered your bill photo — continuing the scan.'),
-          ),
-        );
+      AppSnackbar.show(
+        context,
+        'Recovered your bill photo — continuing the scan.',
+      );
       _navigatedAway = true;
       _push(ScanScreen(initialImagePath: files.first.path));
     } on Exception {
@@ -101,13 +101,10 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text('Could not add friend: ${e.message ?? e.code}'),
-          ),
-        );
+      AppSnackbar.showError(
+        context,
+        'Could not add friend: ${e.message ?? e.code}',
+      );
     }
   }
 
@@ -123,21 +120,41 @@ class _HomeScreenState extends State<HomeScreen> {
     await context.read<AuthRepository>().signOut();
   }
 
+  void _onBackPressed() {
+    final DateTime now = DateTime.now();
+    final DateTime? last = _lastBackPressTime;
+    if (last != null && now.difference(last) <= _exitPromptWindow) {
+      SystemNavigator.pop();
+      return;
+    }
+    _lastBackPressTime = now;
+    AppSnackbar.show(context, 'Press again to exit.');
+  }
+
   @override
   Widget build(BuildContext context) {
     final User? user = context.watch<User?>();
 
     return ValueListenableBuilder<int>(
       valueListenable: _tabIndex,
-      builder: (context, tabIndex, _) => Scaffold(
-        backgroundColor: AppColors.lightBackground,
-        body: IndexedStack(
-          index: tabIndex,
-          children: [_buildDashboard(user), const HistoryScreen()],
-        ),
-        bottomNavigationBar: HomeNavBar(
-          currentIndex: tabIndex,
-          onTap: (index) => _tabIndex.value = index,
+      builder: (context, tabIndex, _) => PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) {
+            return;
+          }
+          _onBackPressed();
+        },
+        child: Scaffold(
+          backgroundColor: AppColors.lightBackground,
+          body: IndexedStack(
+            index: tabIndex,
+            children: [_buildDashboard(user), const HistoryScreen()],
+          ),
+          bottomNavigationBar: HomeNavBar(
+            currentIndex: tabIndex,
+            onTap: (index) => _tabIndex.value = index,
+          ),
         ),
       ),
     );

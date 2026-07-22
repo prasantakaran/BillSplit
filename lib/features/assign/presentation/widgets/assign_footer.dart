@@ -40,7 +40,8 @@ class AssignFooter extends StatelessWidget {
             showcaseKey: ShowcaseKeys.assignCalculateButton,
             group: ShowcaseKeys.assignGroup,
             title: 'Calculate Split',
-            description: 'Once every item is assigned, tap here to see who '
+            description:
+                'Once every item is assigned, tap here to see who '
                 'owes what.',
             icon: Icons.calculate_outlined,
             child: AppButton(

@@ -1,8 +1,13 @@
 import 'package:equatable/equatable.dart';
 
-/// One person's share of a bill: their item costs plus a proportional part
-/// of the tax.
 class Settlement extends Equatable {
+  final String friendId;
+  final String friendName;
+  final double itemsTotal;
+  final double taxShare;
+
+  double get totalOwed => itemsTotal + taxShare;
+
   const Settlement({
     required this.friendId,
     required this.friendName,
@@ -19,15 +24,8 @@ class Settlement extends Equatable {
     );
   }
 
-  final String friendId;
-  final String friendName;
-  final double itemsTotal;
-  final double taxShare;
-
   @override
   List<Object?> get props => [friendId, friendName, itemsTotal, taxShare];
-
-  double get totalOwed => itemsTotal + taxShare;
 
   Map<String, dynamic> toMap() {
     return {

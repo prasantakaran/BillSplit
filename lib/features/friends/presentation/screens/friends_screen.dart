@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/models/friend.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
 import '../../data/repositories/friends_repository_impl.dart';
@@ -113,9 +114,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    AppSnackbar.showError(context, message);
   }
 
   @override

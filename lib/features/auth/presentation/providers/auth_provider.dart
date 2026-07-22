@@ -11,8 +11,7 @@ List<SingleChildWidget> buildAuthProviders(AuthService authService) {
     Provider<AuthRepository>.value(
       value: AuthRepositoryImpl(authService: authService),
     ),
-    // Kept for screens outside the auth feature that read the Firebase user
-    // directly (display name, uid, ...) rather than through AuthRepository.
+
     StreamProvider<User?>.value(
       value: authService.authStateChanges(),
       initialData: authService.currentUser,

@@ -4,6 +4,14 @@ import 'bill_item.dart';
 import 'settlement.dart';
 
 class Bill extends Equatable {
+  final String id;
+  final String restaurantName;
+  final DateTime createdAt;
+  final List<BillItem> items;
+  final double taxAmount;
+  final double totalAmount;
+  final List<Settlement> settlements;
+
   const Bill({
     required this.id,
     required this.restaurantName,
@@ -31,14 +39,6 @@ class Bill extends Equatable {
           .toList(),
     );
   }
-
-  final String id;
-  final String restaurantName;
-  final DateTime createdAt;
-  final List<BillItem> items;
-  final double taxAmount;
-  final double totalAmount;
-  final List<Settlement> settlements;
 
   @override
   List<Object?> get props => [

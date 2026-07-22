@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/models/bill.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
 import '../../data/repositories/bills_repository_impl.dart';
 import '../../domain/repositories/bills_repository.dart';
@@ -231,13 +232,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text('Could not delete bill: ${e.message ?? e.code}'),
-          ),
-        );
+      AppSnackbar.showError(
+        context,
+        'Could not delete bill: ${e.message ?? e.code}',
+      );
     }
   }
 

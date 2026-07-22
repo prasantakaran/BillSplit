@@ -4,9 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 
-/// Confirmation dialog shown before signing the user out.
-///
-/// Returns `true` if the user confirmed logout, `false`/`null` otherwise.
 class LogoutDialog extends StatelessWidget {
   const LogoutDialog({super.key});
 
@@ -66,10 +63,7 @@ class LogoutDialog extends StatelessWidget {
                   ),
                   child: const Text(
                     'Logout',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

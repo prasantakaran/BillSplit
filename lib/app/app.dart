@@ -20,9 +20,7 @@ class BillSplitApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ...buildAuthProviders(authService ?? AuthService()),
-        ChangeNotifierProvider<BillFlowState>(
-          create: (_) => BillFlowState(),
-        ),
+        ChangeNotifierProvider<BillFlowState>(create: (_) => BillFlowState()),
       ],
       child: MaterialApp(
         title: AppConstants.appName,

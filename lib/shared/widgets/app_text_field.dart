@@ -9,6 +9,7 @@ class AppTextField extends StatelessWidget {
     required this.hint,
     required this.prefixIcon,
     this.controller,
+    this.focusNode,
     this.suffixIcon,
     this.obscureText = false,
     this.keyboardType,
@@ -23,6 +24,7 @@ class AppTextField extends StatelessWidget {
   final String hint;
   final IconData prefixIcon;
   final TextEditingController? controller;
+  final FocusNode? focusNode;
   final Widget? suffixIcon;
   final bool obscureText;
   final TextInputType? keyboardType;
@@ -44,6 +46,7 @@ class AppTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
       obscureText: obscureText,
       keyboardType: keyboardType,
       textInputAction: textInputAction,

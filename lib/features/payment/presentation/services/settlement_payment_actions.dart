@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/models/settlement.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/upi_link_builder.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../data/services/native_url_launcher_service.dart';
 import '../../data/services/share_plus_sharing_service.dart';
 import '../../domain/payment_message_builder.dart';
@@ -10,17 +11,15 @@ import '../../domain/services/sharing_service.dart';
 import '../../domain/services/url_launcher_service.dart';
 import '../widgets/upi_qr_sheet.dart';
 
-/// Share / open-UPI-app / QR actions for one settlement, shared by the
-/// results screen and the history bill detail sheet.
 class SettlementPaymentActions {
+  final SharingService _sharingService;
+  final UrlLauncherService _urlLauncherService;
+
   SettlementPaymentActions({
     SharingService? sharingService,
     UrlLauncherService? urlLauncherService,
   }) : _sharingService = sharingService ?? SharePlusSharingService(),
        _urlLauncherService = urlLauncherService ?? NativeUrlLauncherService();
-
-  final SharingService _sharingService;
-  final UrlLauncherService _urlLauncherService;
 
   Future<void> shareRequest({
     required Settlement settlement,
@@ -85,17 +84,18 @@ class SettlementPaymentActions {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => UpiQrSheet(
-        settlement: settlement,
-        upiUri: uri,
-        payeeUpiId: payeeUpiId,
+      builder: (context) => SizedBox(
+        width: double.infinity,
+        child: UpiQrSheet(
+          settlement: settlement,
+          upiUri: uri,
+          payeeUpiId: payeeUpiId,
+        ),
       ),
     );
   }
 
   void _showMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    AppSnackbar.showError(context, message);
   }
 }

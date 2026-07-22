@@ -4,8 +4,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/showcase_keys.dart';
 import '../../../../shared/widgets/show_case_widget.dart';
 
-/// Bottom navigation between the dashboard and bill history, styled to
-/// match the navy [AppTopBar].
 class HomeNavBar extends StatelessWidget {
   const HomeNavBar({
     super.key,
@@ -31,7 +29,8 @@ class HomeNavBar extends StatelessWidget {
             showcaseKey: ShowcaseKeys.navHome,
             group: ShowcaseKeys.homeGroup,
             title: 'Dashboard',
-            description: 'Your home base — scan bills and manage friends '
+            description:
+                'Your home base — scan bills and manage friends '
                 'from here.',
             icon: Icons.home_outlined,
             child: const Icon(Icons.home_outlined),
@@ -44,7 +43,8 @@ class HomeNavBar extends StatelessWidget {
             showcaseKey: ShowcaseKeys.navHistory,
             group: ShowcaseKeys.homeGroup,
             title: 'Bill History',
-            description: 'Every bill you\'ve split before, all in one '
+            description:
+                'Every bill you\'ve split before, all in one '
                 'place.',
             icon: Icons.history_outlined,
             child: const Icon(Icons.history_outlined),

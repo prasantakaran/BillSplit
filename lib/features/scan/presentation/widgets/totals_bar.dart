@@ -7,7 +7,6 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/show_case_widget.dart';
 import '../../../../shared/providers/bill_flow_state.dart';
 
-// This is Sticky footer for displaying bill totals.
 class TotalsBar extends StatelessWidget {
   const TotalsBar({super.key, required this.flow, required this.onContinue});
 
@@ -35,7 +34,8 @@ class TotalsBar extends StatelessWidget {
             showcaseKey: ShowcaseKeys.editContinueButton,
             group: ShowcaseKeys.editItemsGroup,
             title: 'Continue',
-            description: 'Happy with the items and totals? Continue to '
+            description:
+                'Happy with the items and totals? Continue to '
                 'assign them to your friends.',
             icon: Icons.arrow_forward,
             child: AppButton(

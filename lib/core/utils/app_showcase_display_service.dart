@@ -17,6 +17,18 @@ class AppShowcaseService {
           }
         }
       },
+      // A user who dismisses the tour early (tap outside, system back) should
+      // not be shown it again on their next visit either.
+      onDismiss: (dismissedAt) {
+        if (dismissedAt == null) {
+          return;
+        }
+        for (final entry in ShowcaseKeys.allGroups.entries) {
+          if (entry.value.contains(dismissedAt)) {
+            markSeen(entry.key);
+          }
+        }
+      },
     );
   }
 

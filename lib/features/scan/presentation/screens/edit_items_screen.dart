@@ -86,8 +86,7 @@ class _EditItemsScreenState extends State<EditItemsScreen> {
                     description: 'Missed something? Add it manually here.',
                     icon: Icons.add,
                     child: OutlinedButton.icon(
-                      onPressed: () =>
-                          context.read<BillFlowState>().addItem(),
+                      onPressed: () => context.read<BillFlowState>().addItem(),
                       icon: const Icon(Icons.add),
                       label: const Text('Add item'),
                       style: OutlinedButton.styleFrom(

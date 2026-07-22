@@ -26,7 +26,8 @@ class SaveBillBar extends StatelessWidget {
           showcaseKey: ShowcaseKeys.resultsSaveButton,
           group: ShowcaseKeys.resultsGroup,
           title: 'Save the Bill',
-          description: 'Save this split to your history so you can revisit '
+          description:
+              'Save this split to your history so you can revisit '
               'it anytime.',
           icon: Icons.check_circle_outline,
           child: AppButton(

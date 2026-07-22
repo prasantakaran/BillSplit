@@ -14,6 +14,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_showcase_display_service.dart';
 import '../../../../core/utils/showcase_keys.dart';
 import '../../../../core/utils/validation.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../../shared/widgets/show_case_widget.dart';
@@ -151,9 +152,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
         'No connection — bill saved on this device and will sync when online.',
       );
     } on FirebaseException catch (e) {
-      _showMessage('Could not save the bill: ${e.message ?? e.code}');
+      _showError('Could not save the bill: ${e.message ?? e.code}');
     } catch (e) {
-      _showMessage('Could not save the bill: $e');
+      _showError('Could not save the bill: $e');
     } finally {
       if (mounted) {
         _isSaving.value = false;
@@ -166,19 +167,15 @@ class _ResultsScreenState extends State<ResultsScreen> {
       return;
     }
     context.read<BillFlowState>().reset();
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    AppSnackbar.show(context, message);
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
-  void _showMessage(String message) {
+  void _showError(String message) {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    AppSnackbar.showError(context, message);
   }
 
   @override

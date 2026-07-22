@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_showcase_display_service.dart';
 import '../../../../core/utils/showcase_keys.dart';
 import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../../shared/widgets/show_case_widget.dart';
 import '../../../../shared/providers/bill_flow_state.dart';
@@ -23,8 +24,6 @@ import 'edit_items_screen.dart';
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key, this.initialImagePath});
 
-  /// Bill photo recovered after Android killed the app while the camera
-  /// was open; shown immediately instead of the empty picker state.
   final String? initialImagePath;
 
   @override
@@ -52,9 +51,6 @@ class _ScanScreenState extends State<ScanScreen> {
     });
   }
 
-  /// Android may destroy the Flutter activity while the system camera is open.
-  /// image_picker stores that pending result so it can be recovered when this
-  /// screen is created again.
   Future<void> _recoverLostImage() async {
     try {
       final LostDataResponse response = await _picker.retrieveLostData();
@@ -65,17 +61,23 @@ class _ScanScreenState extends State<ScanScreen> {
       final List<XFile>? files = response.files;
       if (files != null && files.isNotEmpty) {
         _imagePath.value = files.first.path;
-        _showMessage('Camera image recovered.');
+        AppSnackbar.show(context, 'Camera image recovered.');
         return;
       }
 
       final Exception? exception = response.exception;
       if (exception != null) {
-        _showMessage('Could not recover the camera image: $exception');
+        AppSnackbar.showError(
+          context,
+          'Could not recover the camera image: $exception',
+        );
       }
     } on Exception catch (e) {
       if (mounted) {
-        _showMessage('Could not recover the camera image: $e');
+        AppSnackbar.showError(
+          context,
+          'Could not recover the camera image: $e',
+        );
       }
     }
   }
@@ -98,8 +100,6 @@ class _ScanScreenState extends State<ScanScreen> {
       if (picked == null) {
         return;
       }
-      // Cropping is required: keeping only the items, tax and total section
-      // removes background clutter and noticeably improves OCR accuracy.
       final String? cropped = await _cropImage(picked.path);
       if (cropped == null) {
         _showMessage(
@@ -110,15 +110,13 @@ class _ScanScreenState extends State<ScanScreen> {
       }
       _imagePath.value = cropped;
     } on Exception catch (e) {
-      _showMessage(
+      _showError(
         'Could not open '
         '${source == ImageSource.camera ? 'camera' : 'gallery'}: $e',
       );
     }
   }
 
-  /// Opens the crop UI for the picked photo. Returns null when the user
-  /// backs out.
   Future<String?> _cropImage(String sourcePath) async {
     try {
       final CroppedFile? cropped = await ImageCropper().cropImage(
@@ -137,7 +135,7 @@ class _ScanScreenState extends State<ScanScreen> {
       );
       return cropped?.path;
     } on Exception catch (e) {
-      _showMessage('Could not crop the image: $e');
+      _showError('Could not crop the image: $e');
       return null;
     }
   }
@@ -182,7 +180,7 @@ class _ScanScreenState extends State<ScanScreen> {
         context,
       ).push(MaterialPageRoute<void>(builder: (_) => const EditItemsScreen()));
     } on Exception catch (e) {
-      _showMessage('Could not read the bill: $e');
+      _showError('Could not read the bill: $e');
     } finally {
       if (mounted) {
         _isProcessing.value = false;
@@ -194,9 +192,21 @@ class _ScanScreenState extends State<ScanScreen> {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    AppSnackbar.show(context, message);
+  }
+
+  void _showError(String message) {
+    if (!mounted) {
+      return;
+    }
+    AppSnackbar.showError(context, message);
+  }
+
+  Future<void> _addItemsManually() async {
+    context.read<BillFlowState>().startNewBill();
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const EditItemsScreen()));
   }
 
   @override
@@ -248,7 +258,8 @@ class _ScanScreenState extends State<ScanScreen> {
                 showcaseKey: ShowcaseKeys.scanSourceButtons,
                 group: ShowcaseKeys.scanGroup,
                 title: 'Pick a Photo',
-                description: 'Take a new photo or choose one from your '
+                description:
+                    'Take a new photo or choose one from your '
                     'gallery to get started.',
                 icon: Icons.add_a_photo_outlined,
                 child: ImageSourceButtons(
@@ -263,7 +274,8 @@ class _ScanScreenState extends State<ScanScreen> {
                   showcaseKey: ShowcaseKeys.scanDetectButton,
                   group: ShowcaseKeys.scanGroup,
                   title: 'Detect Items',
-                  description: 'Once you\'ve picked and cropped a photo, '
+                  description:
+                      'Once you\'ve picked and cropped a photo, '
                       'tap here to read the items automatically.',
                   icon: Icons.document_scanner_outlined,
                   child: AppButton(
@@ -273,6 +285,12 @@ class _ScanScreenState extends State<ScanScreen> {
                     onPressed: _imagePath.value == null ? null : _detectItems,
                   ),
                 ),
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: _addItemsManually,
+                icon: const Icon(Icons.edit_note_outlined),
+                label: const Text('Add items manually instead'),
               ),
             ],
           ),

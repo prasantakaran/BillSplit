@@ -29,10 +29,37 @@ class BillDetailSheet extends StatefulWidget {
 
 class _BillDetailSheetState extends State<BillDetailSheet> {
   final TextEditingController _upiController = TextEditingController();
+  final FocusNode _upiFocusNode = FocusNode();
+  final GlobalKey _upiFieldKey = GlobalKey();
   final SettlementPaymentActions _paymentActions = SettlementPaymentActions();
 
   @override
+  void initState() {
+    super.initState();
+    _upiFocusNode.addListener(_scrollUpiFieldIntoViewOnFocus);
+  }
+
+  void _scrollUpiFieldIntoViewOnFocus() {
+    if (!_upiFocusNode.hasFocus) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final BuildContext? fieldContext = _upiFieldKey.currentContext;
+      if (fieldContext != null) {
+        Scrollable.ensureVisible(
+          fieldContext,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+          alignment: 0.1,
+        );
+      }
+    });
+  }
+
+  @override
   void dispose() {
+    _upiFocusNode.removeListener(_scrollUpiFieldIntoViewOnFocus);
+    _upiFocusNode.dispose();
     _upiController.dispose();
     super.dispose();
   }
@@ -49,107 +76,114 @@ class _BillDetailSheetState extends State<BillDetailSheet> {
   Widget build(BuildContext context) {
     final Bill bill = widget.bill;
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.75,
-          ),
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              Text(
-                bill.restaurantName,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.lightTextPrimary,
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * 0.75,
+            ),
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                Text(
+                  bill.restaurantName,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.lightTextPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                widget.dateFormat.format(bill.createdAt),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  color: AppColors.lightTextSecondary,
+                const SizedBox(height: 2),
+                Text(
+                  widget.dateFormat.format(bill.createdAt),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: AppColors.lightTextSecondary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              for (final BillItem item in bill.items)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item.name,
+                const SizedBox(height: 16),
+                for (final BillItem item in bill.items)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.name,
+                            style: const TextStyle(
+                              color: AppColors.lightTextPrimary,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          CurrencyFormatter.format(item.price),
                           style: const TextStyle(
                             color: AppColors.lightTextPrimary,
                           ),
                         ),
-                      ),
-                      Text(
-                        CurrencyFormatter.format(item.price),
-                        style: const TextStyle(
-                          color: AppColors.lightTextPrimary,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
+                  ),
+                const Divider(color: AppColors.lightBorder, height: 20),
+                _line('Tax', CurrencyFormatter.format(bill.taxAmount)),
+                const SizedBox(height: 4),
+                _line(
+                  'Total',
+                  CurrencyFormatter.format(bill.totalAmount),
+                  emphasized: true,
+                ),
+                const SizedBox(height: 16),
+                KeyedSubtree(
+                  key: _upiFieldKey,
+                  child: AppTextField(
+                    controller: _upiController,
+                    focusNode: _upiFocusNode,
+                    hint: 'Your UPI ID — to request payments',
+                    prefixIcon: Icons.currency_rupee,
+                    textInputAction: TextInputAction.done,
+                    validator: Validators.upiId,
                   ),
                 ),
-              const Divider(color: AppColors.lightBorder, height: 20),
-              _line('Tax', CurrencyFormatter.format(bill.taxAmount)),
-              const SizedBox(height: 4),
-              _line(
-                'Total',
-                CurrencyFormatter.format(bill.totalAmount),
-                emphasized: true,
-              ),
-              const SizedBox(height: 16),
-              AppTextField(
-                controller: _upiController,
-                hint: 'Your UPI ID — to request payments',
-                prefixIcon: Icons.currency_rupee,
-                textInputAction: TextInputAction.done,
-                validator: Validators.upiId,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Who owed what',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.lightTextPrimary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              for (final Settlement s in bill.settlements)
-                SettlementCard(
-                  settlement: s,
-                  onShare: () => _paymentActions.shareRequest(
-                    settlement: s,
-                    billName: bill.restaurantName,
-                    payeeName: _payeeName,
-                    payeeUpiId: _myUpiId,
-                  ),
-                  onPreviewLink: () => _paymentActions.openUpiApp(
-                    context,
-                    settlement: s,
-                    billName: bill.restaurantName,
-                    payeeName: _payeeName,
-                    payeeUpiId: _myUpiId,
-                  ),
-                  onShowQr: () => _paymentActions.showQr(
-                    context,
-                    settlement: s,
-                    billName: bill.restaurantName,
-                    payeeName: _payeeName,
-                    payeeUpiId: _myUpiId,
+                const SizedBox(height: 16),
+                const Text(
+                  'Who owed what',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.lightTextPrimary,
                   ),
                 ),
-            ],
+                const SizedBox(height: 8),
+                for (final Settlement s in bill.settlements)
+                  SettlementCard(
+                    settlement: s,
+                    onShare: () => _paymentActions.shareRequest(
+                      settlement: s,
+                      billName: bill.restaurantName,
+                      payeeName: _payeeName,
+                      payeeUpiId: _myUpiId,
+                    ),
+                    onPreviewLink: () => _paymentActions.openUpiApp(
+                      context,
+                      settlement: s,
+                      billName: bill.restaurantName,
+                      payeeName: _payeeName,
+                      payeeUpiId: _myUpiId,
+                    ),
+                    onShowQr: () => _paymentActions.showQr(
+                      context,
+                      settlement: s,
+                      billName: bill.restaurantName,
+                      payeeName: _payeeName,
+                      payeeUpiId: _myUpiId,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

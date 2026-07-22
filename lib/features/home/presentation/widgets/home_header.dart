@@ -49,7 +49,8 @@ class HomeHeader extends StatelessWidget {
             showcaseKey: ShowcaseKeys.homeScanCard,
             group: ShowcaseKeys.homeGroup,
             title: 'Scan a Bill',
-            description: 'Snap or upload a receipt — BillSplit reads the '
+            description:
+                'Snap or upload a receipt — BillSplit reads the '
                 'items for you automatically.',
             icon: Icons.document_scanner_outlined,
             child: ScanBillCard(onTap: onScanTap),

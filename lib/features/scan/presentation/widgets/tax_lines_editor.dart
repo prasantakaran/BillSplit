@@ -7,10 +7,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/providers/bill_flow_state.dart';
 import 'edit_field_decoration.dart';
 
-/// Editable list of the bill's tax/charge lines (CGST, SGST, service
-/// charge, ...). Lines detected by the scanner seed the list; each can be
-/// renamed, re-priced or removed, and new ones added. The bill's total tax
-/// is always the sum of these lines.
 class TaxLinesEditor extends StatelessWidget {
   const TaxLinesEditor({super.key, required this.taxLines});
 
@@ -72,9 +68,7 @@ class _TaxLineRowState extends State<TaxLineRow> {
     text: widget.line.amount == 0
         ? ''
         : widget.line.amount.toStringAsFixed(
-            widget.line.amount.truncateToDouble() == widget.line.amount
-                ? 0
-                : 2,
+            widget.line.amount.truncateToDouble() == widget.line.amount ? 0 : 2,
           ),
   );
 
