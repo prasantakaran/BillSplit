@@ -9,12 +9,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_logo.dart';
 import '../../../auth/presentation/screens/auth_gate.dart';
 
-/// Branded splash screen shown on app launch.
-///
-/// Plays a short intro animation (logo fades and scales in, tagline slides up
-/// after it), then fades into the [AuthGate] once
-/// [AppConstants.splashMinDuration] has elapsed — signed-in users land on
-/// home, everyone else on the login screen.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 

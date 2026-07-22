@@ -3,4 +3,3 @@ abstract class OcrService {
 
   Future<void> dispose();
 }
-// 
