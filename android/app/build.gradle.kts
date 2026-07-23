@@ -44,6 +44,29 @@ android {
         versionName = flutter.versionName
     }
 
+    // applicationId is kept the same across flavors (single Firebase project /
+    // single google-services.json registered for com.billsplit.app) so each
+    // flavor still installs and authenticates correctly. Flavors only change
+    // the app name and version suffix; environment is otherwise selected via
+    // the Dart entrypoint (main_dev.dart / main_staging.dart / main_prod.dart).
+    flavorDimensions += "env"
+    productFlavors {
+        create("dev") {
+            dimension = "env"
+            versionNameSuffix = "-dev"
+            resValue("string", "app_name", "BillSplit Dev")
+        }
+        create("staging") {
+            dimension = "env"
+            versionNameSuffix = "-staging"
+            resValue("string", "app_name", "BillSplit Staging")
+        }
+        create("prod") {
+            dimension = "env"
+            resValue("string", "app_name", "BillSplit")
+        }
+    }
+
     signingConfigs {
         create("release") {
             if (keystorePropertiesFile.exists()) {
