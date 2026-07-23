@@ -395,6 +395,13 @@ BillSplit demonstrates practical experience with:
 * Unit and widget testing
 * Android lifecycle handling
 
+
+//for made apk or aab file
+flutter build apk --release --flavor prod -t lib/main_prod.dart
+
+flutter build appbundle --release --flavor prod -t lib/main_prod.dart
+
+
 ---
 
 Built with ❤️ using **Flutter & Dart**.
