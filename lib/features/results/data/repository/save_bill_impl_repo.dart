@@ -1,5 +1,6 @@
 import 'package:bill_split/core/models/bill.dart';
 import 'package:bill_split/features/results/domain/repository/save_bill_repo.dart';
+import 'package:bill_split/shared/data/firestore_guard.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SaveBillImplRepo implements SaveBillRepository {
@@ -10,6 +11,6 @@ class SaveBillImplRepo implements SaveBillRepository {
 
   @override
   Future<void> saveBill(Bill bill) {
-    return _collection.doc(bill.id).set(bill.toMap());
+    return guardFirestore(() => _collection.doc(bill.id).set(bill.toMap()));
   }
 }

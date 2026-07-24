@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -10,7 +8,6 @@ import '../../../../core/utils/app_showcase_display_service.dart';
 import '../../../../core/utils/showcase_keys.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../../shared/widgets/show_case_widget.dart';
-import '../../../friends/data/repositories/friends_repository_impl.dart';
 import '../../../friends/domain/repositories/friends_repository.dart';
 import '../../../friends/presentation/widgets/add_friend_dialog.dart';
 import '../../../../shared/providers/bill_flow_state.dart';
@@ -35,11 +32,7 @@ class _AssignScreenState extends State<AssignScreen> {
   @override
   void initState() {
     super.initState();
-    final User user = context.read<User?>()!;
-    _repository = FriendsRepositoryImpl(
-      firestore: FirebaseFirestore.instance,
-      uid: user.uid,
-    );
+    _repository = context.read<FriendsRepository?>()!;
     _friendsStream = _repository.watchFriends();
   }
 

@@ -5,9 +5,12 @@ import 'package:provider/provider.dart';
 
 import 'package:bill_split/app/app.dart';
 import 'package:bill_split/core/constants/app_const.dart';
+import 'package:bill_split/core/models/friend.dart';
 import 'package:bill_split/features/auth/data/services/auth_service.dart';
 import 'package:bill_split/features/auth/presentation/providers/auth_provider.dart';
 import 'package:bill_split/features/auth/presentation/screens/login_screen.dart';
+import 'package:bill_split/features/friends/domain/repositories/friends_repository.dart';
+import 'package:bill_split/features/friends/presentation/screens/friends_screen.dart';
 import 'package:bill_split/features/splash/presentation/screens/splash_screen.dart';
 
 /// Auth service stand-in so widget tests never touch Firebase.
@@ -34,10 +37,40 @@ class FakeAuthService implements AuthService {
   Future<void> signOut() async {}
 }
 
+/// In-memory friends store, so the screen can be driven without Firestore.
+class FakeFriendsRepository implements FriendsRepository {
+  FakeFriendsRepository(this._friends);
+
+  final List<Friend> _friends;
+
+  @override
+  Stream<List<Friend>> watchFriends() => Stream<List<Friend>>.value(_friends);
+
+  @override
+  Future<void> addFriend(Friend friend) async => _friends.add(friend);
+
+  @override
+  Future<void> updateFriend(Friend friend) async {}
+
+  @override
+  Future<void> deleteFriend(String id) async =>
+      _friends.removeWhere((f) => f.id == id);
+}
+
 Widget _wrapLogin() {
   return MultiProvider(
     providers: buildAuthProviders(FakeAuthService()),
     child: const MaterialApp(home: LoginScreen()),
+  );
+}
+
+/// Registers the fake against the *interface*, exactly how
+/// `buildRepositoryProviders` registers the Firestore implementation in
+/// production — which is what makes this screen testable at all.
+Widget _wrapFriends(FriendsRepository repository) {
+  return Provider<FriendsRepository?>.value(
+    value: repository,
+    child: const MaterialApp(home: FriendsScreen()),
   );
 }
 
@@ -138,6 +171,47 @@ void main() {
       await tester.pump();
 
       expect(find.text('Passwords do not match'), findsOneWidget);
+    });
+  });
+
+  group('FriendsScreen with an injected repository', () {
+    final List<Friend> friends = const [
+      Friend(id: 'a', name: 'Asha', upiId: 'asha@upi'),
+      Friend(id: 'b', name: 'Bala'),
+      Friend(id: 'c', name: 'Chitra'),
+    ];
+
+    testWidgets('renders the friends supplied by the repository',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+          _wrapFriends(FakeFriendsRepository(List<Friend>.of(friends))));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Asha'), findsOneWidget);
+      expect(find.text('Bala'), findsOneWidget);
+      expect(find.text('Chitra'), findsOneWidget);
+    });
+
+    testWidgets('shows the empty state when the repository has no friends',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_wrapFriends(FakeFriendsRepository(<Friend>[])));
+      await tester.pumpAndSettle();
+
+      expect(find.text('No friends yet'), findsOneWidget);
+    });
+
+    testWidgets('filters the list as the search query changes',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+          _wrapFriends(FakeFriendsRepository(List<Friend>.of(friends))));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).first, 'ash');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Asha'), findsOneWidget);
+      expect(find.text('Bala'), findsNothing);
+      expect(find.text('Chitra'), findsNothing);
     });
   });
 }

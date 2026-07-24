@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../core/models/friend.dart';
+import '../../../../shared/data/firestore_guard.dart';
 import '../../domain/repositories/friends_repository.dart';
 
 class FriendsRepositoryImpl implements FriendsRepository {
@@ -28,16 +29,16 @@ class FriendsRepositoryImpl implements FriendsRepository {
 
   @override
   Future<void> addFriend(Friend friend) {
-    return _collection.doc(friend.id).set(friend.toMap());
+    return guardFirestore(() => _collection.doc(friend.id).set(friend.toMap()));
   }
 
   @override
   Future<void> updateFriend(Friend friend) {
-    return _collection.doc(friend.id).set(friend.toMap());
+    return guardFirestore(() => _collection.doc(friend.id).set(friend.toMap()));
   }
 
   @override
   Future<void> deleteFriend(String id) {
-    return _collection.doc(id).delete();
+    return guardFirestore(() => _collection.doc(id).delete());
   }
 }

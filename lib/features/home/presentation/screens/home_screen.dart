@@ -1,10 +1,9 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/exceptions/data_exception.dart';
 import '../../../../core/models/friend.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_showcase_display_service.dart';
@@ -12,8 +11,8 @@ import '../../../../core/utils/showcase_keys.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../../shared/widgets/show_case_widget.dart';
+import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
-import '../../../friends/data/repositories/friends_repository_impl.dart';
 import '../../../friends/domain/repositories/friends_repository.dart';
 import '../../../friends/presentation/screens/friends_screen.dart';
 import '../../../friends/presentation/widgets/add_friend_dialog.dart';
@@ -48,11 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    final User user = context.read<User?>()!;
-    _repository = FriendsRepositoryImpl(
-      firestore: FirebaseFirestore.instance,
-      uid: user.uid,
-    );
+    _repository = context.read<FriendsRepository?>()!;
     _friendsStream = _repository.watchFriends();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _resumeLostScan();
@@ -97,13 +92,13 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     try {
       await _repository.addFriend(friend);
-    } on FirebaseException catch (e) {
+    } on DataException catch (e) {
       if (!mounted) {
         return;
       }
       AppSnackbar.showError(
         context,
-        'Could not add friend: ${e.message ?? e.code}',
+        'Could not add friend: ${e.message}',
       );
     }
   }
@@ -133,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final User? user = context.watch<User?>();
+    final AppUser? user = context.watch<AppUser?>();
 
     return ValueListenableBuilder<int>(
       valueListenable: _tabIndex,
@@ -161,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// The Home tab: greeting, scan card, searchable friends list.
-  Widget _buildDashboard(User? user) {
+  Widget _buildDashboard(AppUser? user) {
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppTopBar(

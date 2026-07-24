@@ -1,14 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/exceptions/data_exception.dart';
 import '../../../../core/models/friend.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
-import '../../data/repositories/friends_repository_impl.dart';
 import '../../domain/repositories/friends_repository.dart';
 import '../widgets/add_friend_dialog.dart';
 import '../widgets/friend_card.dart';
@@ -29,11 +27,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   @override
   void initState() {
     super.initState();
-    final User user = context.read<User?>()!;
-    _repository = FriendsRepositoryImpl(
-      firestore: FirebaseFirestore.instance,
-      uid: user.uid,
-    );
+    _repository = context.read<FriendsRepository?>()!;
     _friendsStream = _repository.watchFriends();
   }
 
@@ -62,8 +56,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
     }
     try {
       await _repository.updateFriend(edited);
-    } on FirebaseException catch (e) {
-      _showError('Could not update friend: ${e.message ?? e.code}');
+    } on DataException catch (e) {
+      _showError('Could not update friend: ${e.message}');
     }
   }
 
@@ -74,8 +68,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
     }
     try {
       await _repository.addFriend(friend);
-    } on FirebaseException catch (e) {
-      _showError('Could not add friend: ${e.message ?? e.code}');
+    } on DataException catch (e) {
+      _showError('Could not add friend: ${e.message}');
     }
   }
 
@@ -105,8 +99,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
     }
     try {
       await _repository.deleteFriend(friend.id);
-    } on FirebaseException catch (e) {
-      _showError('Could not remove friend: ${e.message ?? e.code}');
+    } on DataException catch (e) {
+      _showError('Could not remove friend: ${e.message}');
     }
   }
 

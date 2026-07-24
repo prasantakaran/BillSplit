@@ -1,5 +1,4 @@
 import 'package:bill_split/features/scan/data/model/parse_bill_model.dart';
-import 'package:equatable/equatable.dart';
 
 import '../../../core/models/bill_item.dart';
 import '../../../core/models/tax_line.dart';

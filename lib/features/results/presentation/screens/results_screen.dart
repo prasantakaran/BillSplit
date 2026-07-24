@@ -1,13 +1,11 @@
 import 'dart:async';
 
-import 'package:bill_split/features/results/data/repository/save_bill_impl_repo.dart';
 import 'package:bill_split/features/results/domain/repository/save_bill_repo.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/exceptions/data_exception.dart';
 import '../../../../core/models/bill.dart';
 import '../../../../core/models/settlement.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -18,8 +16,7 @@ import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
 import '../../../../shared/widgets/show_case_widget.dart';
-import '../../../history/data/repositories/bills_repository_impl.dart';
-import '../../../history/domain/repositories/bills_repository.dart';
+import '../../../auth/domain/entities/app_user.dart';
 import '../../../payment/presentation/services/settlement_payment_actions.dart';
 import '../../../payment/presentation/widgets/settlement_card.dart';
 import '../../../../shared/providers/bill_flow_state.dart';
@@ -37,7 +34,7 @@ class ResultsScreen extends StatefulWidget {
 
 class _ResultsScreenState extends State<ResultsScreen> {
   late final SaveBillRepository _repository;
-  late final User _user;
+  late final AppUser _user;
   final SettlementPaymentActions _paymentActions = SettlementPaymentActions();
 
   final TextEditingController _restaurantController = TextEditingController();
@@ -47,12 +44,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
   @override
   void initState() {
     super.initState();
-    _user = context.read<User?>()!;
-
-    _repository = SaveBillImplRepo(
-      firestore: FirebaseFirestore.instance,
-      uid: _user.uid,
-    );
+    _user = context.read<AppUser?>()!;
+    _repository = context.read<SaveBillRepository?>()!;
     _restaurantController.text = context.read<BillFlowState>().restaurantName;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppShowcaseService.startIfUnseen(ShowcaseKeys.resultsScreenId);
@@ -151,8 +144,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
       _finishSave(
         'No connection — bill saved on this device and will sync when online.',
       );
-    } on FirebaseException catch (e) {
-      _showError('Could not save the bill: ${e.message ?? e.code}');
+    } on DataException catch (e) {
+      _showError('Could not save the bill: ${e.message}');
     } catch (e) {
       _showError('Could not save the bill: $e');
     } finally {

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../core/models/bill.dart';
+import '../../../../shared/data/firestore_guard.dart';
 import '../../domain/repositories/bills_repository.dart';
 
 class BillsRepositoryImpl implements BillsRepository {
@@ -25,6 +26,6 @@ class BillsRepositoryImpl implements BillsRepository {
 
   @override
   Future<void> deleteBill(String id) {
-    return _collection.doc(id).delete();
+    return guardFirestore(() => _collection.doc(id).delete());
   }
 }

@@ -1,16 +1,14 @@
 import 'dart:ui';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/exceptions/data_exception.dart';
 import '../../../../core/models/bill.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/app_top_bar.dart';
-import '../../data/repositories/bills_repository_impl.dart';
 import '../../domain/repositories/bills_repository.dart';
 import '../widgets/bill_card.dart';
 import '../widgets/bill_detail_sheet.dart';
@@ -38,11 +36,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   void initState() {
     super.initState();
-    final User user = context.read<User?>()!;
-    _repository = BillsRepositoryImpl(
-      firestore: FirebaseFirestore.instance,
-      uid: user.uid,
-    );
+    _repository = context.read<BillsRepository?>()!;
     _billsStream = _repository.watchBills();
     _searchController.addListener(() {
       _searchQuery.value = _searchController.text.trim();
@@ -211,13 +205,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
     try {
       await _repository.deleteBill(bill.id);
-    } on FirebaseException catch (e) {
+    } on DataException catch (e) {
       if (!mounted) {
         return;
       }
       AppSnackbar.showError(
         context,
-        'Could not delete bill: ${e.message ?? e.code}',
+        'Could not delete bill: ${e.message}',
       );
     }
   }

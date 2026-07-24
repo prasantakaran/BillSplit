@@ -1,8 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../home/presentation/screens/home_screen.dart';
+import '../../domain/entities/app_user.dart';
 import 'login_screen.dart';
 
 class AuthGate extends StatelessWidget {
@@ -10,7 +10,7 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final User? user = context.watch<User?>();
+    final AppUser? user = context.watch<AppUser?>();
     return user == null ? const LoginScreen() : const HomeScreen();
   }
 }

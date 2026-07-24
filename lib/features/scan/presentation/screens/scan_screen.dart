@@ -22,9 +22,12 @@ import '../widgets/scan_placeholder.dart';
 import 'edit_items_screen.dart';
 
 class ScanScreen extends StatefulWidget {
-  const ScanScreen({super.key, this.initialImagePath});
+  const ScanScreen({super.key, this.initialImagePath, this.ocrService});
 
   final String? initialImagePath;
+
+  /// Overridable in tests; defaults to the ML Kit implementation.
+  final OcrService? ocrService;
 
   @override
   State<ScanScreen> createState() => _ScanScreenState();
@@ -32,8 +35,12 @@ class ScanScreen extends StatefulWidget {
 
 class _ScanScreenState extends State<ScanScreen> {
   final ImagePicker _picker = ImagePicker();
-  final OcrService _ocrService = MlKitOcrService();
-  late final ScanBillUseCase _scanBillUseCase = ScanBillUseCase(_ocrService);
+  late final OcrService _ocrService;
+  late final ScanBillUseCase _scanBillUseCase;
+
+  /// Only the service this screen created is ours to close; an injected one
+  /// belongs to the caller.
+  late final bool _ownsOcrService;
 
   final ValueNotifier<String?> _imagePath = ValueNotifier<String?>(null);
   final ValueNotifier<bool> _isProcessing = ValueNotifier<bool>(false);
@@ -41,6 +48,9 @@ class _ScanScreenState extends State<ScanScreen> {
   @override
   void initState() {
     super.initState();
+    _ownsOcrService = widget.ocrService == null;
+    _ocrService = widget.ocrService ?? MlKitOcrService();
+    _scanBillUseCase = ScanBillUseCase(_ocrService);
     if (widget.initialImagePath != null) {
       _imagePath.value = widget.initialImagePath;
     } else {
@@ -86,7 +96,9 @@ class _ScanScreenState extends State<ScanScreen> {
   void dispose() {
     _imagePath.dispose();
     _isProcessing.dispose();
-    _ocrService.dispose();
+    if (_ownsOcrService) {
+      _ocrService.dispose();
+    }
     super.dispose();
   }
 

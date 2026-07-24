@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/validation.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../auth/domain/entities/app_user.dart';
 import '../../../payment/presentation/services/settlement_payment_actions.dart';
 import '../../../payment/presentation/widgets/settlement_card.dart';
 
@@ -70,7 +70,7 @@ class _BillDetailSheetState extends State<BillDetailSheet> {
   }
 
   String get _payeeName =>
-      context.read<User?>()?.displayName ?? 'BillSplit user';
+      context.read<AppUser?>()?.displayName ?? 'BillSplit user';
 
   @override
   Widget build(BuildContext context) {

@@ -8,12 +8,12 @@ import '../features/auth/data/services/auth_service.dart';
 import '../features/auth/presentation/providers/auth_provider.dart';
 import '../features/splash/presentation/screens/splash_screen.dart';
 import '../shared/providers/bill_flow_state.dart';
+import '../shared/providers/repository_providers.dart';
 
 /// Root widget
 class BillSplitApp extends StatelessWidget {
   const BillSplitApp({super.key, this.authService});
 
-  /// Overridable in widget tests; defaults to the Firebase-backed service.
   final AuthService? authService;
 
   @override
@@ -21,6 +21,7 @@ class BillSplitApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ...buildAuthProviders(authService ?? AuthService()),
+        ...buildRepositoryProviders(),
         ChangeNotifierProvider<BillFlowState>(create: (_) => BillFlowState()),
       ],
       child: MaterialApp(
@@ -29,8 +30,6 @@ class BillSplitApp extends StatelessWidget {
         theme: AppTheme.light.copyWith(
           textTheme: AppTheme.light.textTheme.apply(fontFamily: 'Outfit'),
         ),
-        // Light-only: the app always renders the light theme regardless of
-        // the device dark-mode setting.
         themeMode: ThemeMode.light,
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(
